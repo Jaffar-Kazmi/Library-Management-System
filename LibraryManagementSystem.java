@@ -674,7 +674,7 @@ class BookManagement {
                 }
             }
             if (found) {
-                issuedBook.removeAll(toRemove);
+                issuedBook.removeAll(toRemove); // Remove the returned book from the issued books
                 saveBooksToFile(book); // Save updated book list
                 saveIssuedBooksToFile(issuedBook); // Save updated issued books
                 System.out.println("Book returned successfully.");
