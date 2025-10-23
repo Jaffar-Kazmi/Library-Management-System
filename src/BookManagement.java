@@ -20,9 +20,9 @@ public class BookManagement {
     ArrayList<Order> order = new ArrayList<>() ;
     ArrayList<IssuedBook> issuedBook = new ArrayList<>();
 
-    File bookFile = new File("C:\\Users\\Administrator\\Documents\\Library Management System\\books.txt");
-    File orderFile = new File("C:\\Users\\Administrator\\Documents\\Library Management System\\orders.txt");
-    File issuedBookFile = new File("C:\\Users\\Administrator\\Documents\\Library Management System\\issued books.txt");
+    File bookFile = new File("books.txt");
+    File orderFile = new File("orders.txt");
+    File issuedBookFile = new File("issuedbooks.txt");
 
     BookManagement(BufferedReader read, Scanner sc) {
         this.read = read;
