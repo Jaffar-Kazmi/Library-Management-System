@@ -10,10 +10,12 @@ public class LibraryGUI extends JFrame {
         setSize(1000, 800);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+        setMinimumSize(new Dimension(700, 700));
 
         // --- Main Panel ---
         GradientPanel panel = new GradientPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setPreferredSize(new Dimension(1000, 800));
 
         // Title
         JLabel title = new JLabel("\uD83D\uDCDA Good Books Library");

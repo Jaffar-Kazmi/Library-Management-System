@@ -6,6 +6,8 @@ public class Book {
     String isbn, name, author;
     LocalDate publishDate;
 
+    public Book() {}
+
     Book(String isbn, String name, String author, LocalDate publishDate) {
         this.isbn = isbn;
         this.name = name;
@@ -13,35 +15,35 @@ public class Book {
         this.publishDate = publishDate;
     }
 
-    void setISBN(String isbn) {
+    public void setISBN(String isbn) {
         this.isbn = isbn;
     }
 
-    String getISBN() {
+    public String getISBN() {
         return isbn;
     }
 
-    void setName(String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
-    String getName() {
+    public String getName() {
         return name;
     }
 
-    void setAuthor(String author) {
+    public void setAuthor(String author) {
         this.author = author;
     }
 
-    String getAuthor() {
+    public String getAuthor() {
         return author;
     }
 
-    void setPublishDate(LocalDate publishDate) {
+    public void setPublishDate(LocalDate publishDate) {
         this.publishDate = publishDate;
     }
 
-    LocalDate getPublishDate() {
+    public LocalDate getPublishDate() {
         return publishDate;
     }
 
