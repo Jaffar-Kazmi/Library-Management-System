@@ -13,7 +13,7 @@ public class GradientPanel extends JPanel {
         int h = getHeight();
         // Set fractions: 0=start, 0.5=middle, 1=end
         float[] fractions = {0.0f, 0.5f, 1.0f};
-        Color[] colors = {new Color(214, 244, 237), new Color(135, 186, 195), new Color(83, 98, 158)}; // example colors
+        Color[] colors = {Theme.AQUA, Theme.CYAN, Theme.INDIGO};
 
         LinearGradientPaint paint = new LinearGradientPaint(
                 new Point2D.Float(0, 0),

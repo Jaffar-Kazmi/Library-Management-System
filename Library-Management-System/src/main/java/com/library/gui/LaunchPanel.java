@@ -16,14 +16,14 @@ public class LaunchPanel extends GradientPanel {
 
         // Title
         JLabel title = new JLabel("\uD83D\uDCDA Good Books Library");
-        title.setFont(new Font("Arial", Font.BOLD, 44));
-        title.setForeground(new Color(71, 52, 114));
+        title.setFont(Theme.PRIMARYFONT);
+        title.setForeground(Theme.VIOLET);
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Subtitle
         JLabel subtitle = new JLabel("Digital Library Management System");
         subtitle.setFont(new Font("Arial", Font.ITALIC, 18));
-        subtitle.setForeground(new Color(71, 52, 114));
+        subtitle.setForeground(Theme.VIOLET);
         subtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
