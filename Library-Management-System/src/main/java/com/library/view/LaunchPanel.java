@@ -1,8 +1,7 @@
-package com.library.gui;
+package com.library.view;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class LaunchPanel extends GradientPanel {
@@ -31,13 +30,13 @@ public class LaunchPanel extends GradientPanel {
         separator.setForeground(new Color(150, 130, 200));
 
         // Librarian Button
-        PrimaryButton librarianButton = new PrimaryButton("Librarian");
+        librarianButton = new PrimaryButton("Librarian");
         librarianButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         librarianButton.setToolTipText("Login as librarian to manage library resources");
         librarianButton.addActionListener(librarianAction);
 
         // Reader Button
-        SecondaryButton readerButton = new SecondaryButton("  Reader  ");
+        readerButton = new SecondaryButton("  Reader  ");
         readerButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         readerButton.setToolTipText("Access as a reader to explore books");
         readerButton.addActionListener(readerAction);

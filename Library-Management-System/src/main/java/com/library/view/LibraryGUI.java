@@ -1,13 +1,32 @@
-package com.library.gui;
+package com.library.view;
+
+import com.library.controller.LoginController;
+import com.library.model.Librarian;
+import com.library.model.Reader;
+import com.library.model.User;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 
-public class LibraryGUI extends JFrame {
+public class LibraryGUI extends JFrame implements LoginController.LoginCallBack {
+
+    private static final String LAUNCH_PANEL = "Launch";
+    private static final String LOGIN_LIBRARIAN_PANEL = "LoginLibrarian";
+    private static final String LOGIN_READER_PANEL = "LoginReader";
+    private static final String DASHBOARD_LIBRARIAN_PANEL = "DashboardLibrarian";
+    private static final String DASHBOARD_READER_PANEL = "DashboardReader";
+
+
     private JPanel mainPanel;
+    private CardLayout cardLayout;
     private LaunchPanel launchPanel;
-    private LoginPanel loginPanel;
+    private LoginPanel librarianLoginPanel;
+    private LoginPanel readerLoginPanel;
+
+    private LoginController librarianLoginController;
+    private LoginController readerLoginController;
+
+    private User currentUser;
 
     public LibraryGUI() {
         setTitle("Good Books");
@@ -16,38 +35,57 @@ public class LibraryGUI extends JFrame {
         setLocationRelativeTo(null);
         setMinimumSize(new Dimension(700, 700));
 
-        mainPanel = new JPanel(new CardLayout());
+        cardLayout = new CardLayout();
+        mainPanel = new JPanel(cardLayout);
         add(mainPanel);
 
         launchPanel = new LaunchPanel(
-                e-> showLoginPanel("librarian"),
-                e-> showLoginPanel("reader")
+                e-> showLibrarianLogin(),
+                e-> showReaderLogin()
         );
 
-        loginPanel = new LoginPanel();
+        librarianLoginPanel = new LoginPanel("Librarian");
+        readerLoginPanel = new LoginPanel("Reader");
+
+        // Create controllers
+        librarianLoginController = new LoginController(librarianLoginPanel, this);
+        readerLoginController = new LoginController(readerLoginPanel, this);
+
+        librarianLoginPanel.setController(librarianLoginController);
+        readerLoginPanel.setController(readerLoginController);
 
         mainPanel.add(launchPanel, "launch");
-        mainPanel.add(loginPanel, "login");
+        mainPanel.add(librarianLoginPanel, LOGIN_LIBRARIAN_PANEL);
+        mainPanel.add(readerLoginPanel, LOGIN_READER_PANEL);
 
         // Start on launch
         CardLayout layout = (CardLayout) mainPanel.getLayout();
-        layout.show(mainPanel, "launch");
+        layout.show(mainPanel, LAUNCH_PANEL);
+    }
+
+    private void showLibrarianLogin() {
+        librarianLoginPanel.clearAll();
+        cardLayout.show(mainPanel, LOGIN_LIBRARIAN_PANEL);
+    }
+
+    private void showReaderLogin() {
+        readerLoginPanel.clearAll();
+        cardLayout.show(mainPanel, LOGIN_READER_PANEL);
+    }
+
+    @Override
+    public void onLoginSuccess(User user) {
+        this.currentUser = user;
+
+        if (user instanceof Librarian) {
+            JOptionPane.showMessageDialog(librarianLoginPanel, "Librarian Dashboard will be displayed here");
+        } else if (user instanceof Reader){
+            JOptionPane.showMessageDialog(readerLoginPanel, "Reader Dashboard will be displayed here");
+        }
     }
 
 
-    private void showLoginPanel(String role) {
-        CardLayout layout = (CardLayout) mainPanel.getLayout();
-        layout.show(mainPanel, "login");
-        loginPanel.setRole(role);
-    }
 
-    public void showDashboardPanel(String role, String username){
-        DashboardPanel dashboard = new DashboardPanel(role, username);
-        mainPanel.add(dashboard, "dashboard");
-        CardLayout layout = (CardLayout) mainPanel.getLayout();
-        layout.show(mainPanel, "dashboard");
-
-    }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new LibraryGUI().setVisible(true));
