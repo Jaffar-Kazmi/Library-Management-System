@@ -12,7 +12,7 @@ public class AuthenticationService {
 
     static {
         users.put("admin", new Librarian("admin", "admin@123", "Admin Librarian"));
-        users.put("reader1", new Reader("reader", "reader@123", "Jaffar Raza"));
+        users.put("reader", new Reader("reader", "123", "Jaffar Raza"));
     }
 
     public User authenticate(String username, String password, String userType){
