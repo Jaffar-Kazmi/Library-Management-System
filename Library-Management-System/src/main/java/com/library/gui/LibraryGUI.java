@@ -20,8 +20,8 @@ public class LibraryGUI extends JFrame {
         add(mainPanel);
 
         launchPanel = new LaunchPanel(
-                e-> showLoginPanel(),
-                e-> JOptionPane.showMessageDialog(this, "Reader")
+                e-> showLoginPanel("librarian"),
+                e-> showLoginPanel("reader")
         );
 
         loginPanel = new LoginPanel();
@@ -35,15 +35,18 @@ public class LibraryGUI extends JFrame {
     }
 
 
-    private void showLoginPanel() {
+    private void showLoginPanel(String role) {
         CardLayout layout = (CardLayout) mainPanel.getLayout();
         layout.show(mainPanel, "login");
-        mainPanel.revalidate();
-        mainPanel.repaint();
+        loginPanel.setRole(role);
     }
 
-    public JPanel getMainPanel() {
-        return mainPanel;
+    public void showDashboardPanel(String role, String username){
+        DashboardPanel dashboard = new DashboardPanel(role, username);
+        mainPanel.add(dashboard, "dashboard");
+        CardLayout layout = (CardLayout) mainPanel.getLayout();
+        layout.show(mainPanel, "dashboard");
+
     }
 
     public static void main(String[] args) {
