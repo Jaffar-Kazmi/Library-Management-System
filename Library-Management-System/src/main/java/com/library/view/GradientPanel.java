@@ -1,4 +1,4 @@
-package com.library.gui;
+package com.library.view;
 
 import java.awt.*;
 import java.awt.geom.*;

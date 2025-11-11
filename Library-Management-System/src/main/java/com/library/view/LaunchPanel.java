@@ -8,10 +8,9 @@ public class LaunchPanel extends GradientPanel {
     private PrimaryButton librarianButton;
     private SecondaryButton readerButton;
 
-    public LaunchPanel(ActionListener librarianAction, ActionListener readerAction){
-        // --- Main launchPanel ---
-        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        setPreferredSize(new Dimension(1000, 800));
+    public LaunchPanel(){
+
+        setupLayout();
 
         // Title
         JLabel title = new JLabel("\uD83D\uDCDA Good Books Library");
@@ -33,13 +32,11 @@ public class LaunchPanel extends GradientPanel {
         librarianButton = new PrimaryButton("Librarian");
         librarianButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         librarianButton.setToolTipText("Login as librarian to manage library resources");
-        librarianButton.addActionListener(librarianAction);
 
         // Reader Button
         readerButton = new SecondaryButton("  Reader  ");
         readerButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         readerButton.setToolTipText("Access as a reader to explore books");
-        readerButton.addActionListener(readerAction);
 
         JLabel footer = new JLabel("Developed by Jaffar Raza Kazmi © 2025");
         footer.setFont(new Font("Arial", Font.ITALIC, 14));
@@ -61,4 +58,18 @@ public class LaunchPanel extends GradientPanel {
         add(footer);
         add(Box.createRigidArea(new Dimension(0, 20)));
     }
+
+    private void setupLayout(){
+        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        setPreferredSize(new Dimension(1000, 800));
+    }
+
+    public void addLibrarianButtonListener(ActionListener listener) {
+        librarianButton.addActionListener(listener);
+    }
+
+    public void addReaderButtonListener(ActionListener listener) {
+        readerButton.addActionListener(listener);
+    }
+
 }

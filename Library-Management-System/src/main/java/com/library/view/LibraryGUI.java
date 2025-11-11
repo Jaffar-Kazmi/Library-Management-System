@@ -39,10 +39,9 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
         mainPanel = new JPanel(cardLayout);
         add(mainPanel);
 
-        launchPanel = new LaunchPanel(
-                e-> showLibrarianLogin(),
-                e-> showReaderLogin()
-        );
+        launchPanel = new LaunchPanel();
+        launchPanel.addLibrarianButtonListener(e -> showLibrarianLogin());
+        launchPanel.addReaderButtonListener(e -> showReaderLogin());
 
         librarianLoginPanel = new LoginPanel("Librarian");
         readerLoginPanel = new LoginPanel("Reader");

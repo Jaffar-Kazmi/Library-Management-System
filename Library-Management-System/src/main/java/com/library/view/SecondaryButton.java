@@ -1,4 +1,4 @@
-package com.library.gui;
+package com.library.view;
 
 // SecondaryButton.java
 import javax.swing.*;

@@ -1,6 +1,5 @@
-package com.library.gui;
+package com.library.view;
 
-import javax.swing.*;
 import java.awt.*;
 
 public class Theme {
