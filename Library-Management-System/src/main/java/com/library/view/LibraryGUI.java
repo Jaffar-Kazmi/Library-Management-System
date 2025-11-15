@@ -33,7 +33,7 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
 
     public LibraryGUI() {
         setTitle("Good Books");
-        setSize(1200, 800);
+        setSize(1300, 800);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setMinimumSize(new Dimension(700, 700));
@@ -46,8 +46,10 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
         launchPanel.addLibrarianButtonListener(e -> showLibrarianLogin());
         launchPanel.addReaderButtonListener(e -> showReaderLogin());
 
-        // dumy librarian
-        // launchPanel.addLibrarianButtonListener(e -> showLibrarianDashboard());
+//        // dumy librarian
+//        launchPanel.addLibrarianButtonListener(e -> showLibrarianDashboard());
+//        launchPanel.addReaderButtonListener(e -> showReaderDashboard());
+
 
         librarianLoginPanel = new LoginPanel("Librarian");
         readerLoginPanel = new LoginPanel("Reader");
@@ -110,11 +112,25 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
         layout.show(mainPanel, "librarianDashboard");
     }
 
+    private void  showReaderDashboard(){
+        Reader dumyReader = new Reader("reader", "123", "Raza Kazmi");
+        ReaderDashboardPanel dashboard = new ReaderDashboardPanel(dumyReader);
+
+        mainPanel.add(dashboard, "readerDashboard");
+        CardLayout layout = (CardLayout) mainPanel.getLayout();
+        layout.show(mainPanel, "readerDashboard");
+    }
 
 
     private void showReaderDashboard(Reader reader) {
-        JOptionPane.showMessageDialog(this, "Reader Dashboard coming soon");
-        cardLayout.show(mainPanel, LAUNCH_PANEL);
+        if (readerDashboard == null) {
+            readerDashboard = new ReaderDashboardPanel(reader);
+
+            readerDashboard.addLogoutListener(e -> handleLogout());
+
+            mainPanel.add(readerDashboard, DASHBOARD_READER_PANEL);
+        }
+        cardLayout.show(mainPanel, DASHBOARD_READER_PANEL);
     }
 
     private void handleLogout() {
