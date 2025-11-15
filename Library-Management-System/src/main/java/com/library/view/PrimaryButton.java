@@ -1,8 +1,7 @@
-package com.library.gui;
+package com.library.view;
 
 // PrimaryButton.java
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 
 public class PrimaryButton extends JButton {
