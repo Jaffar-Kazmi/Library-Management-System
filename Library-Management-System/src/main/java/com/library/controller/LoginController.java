@@ -11,9 +11,9 @@ public class LoginController {
     private AuthenticationService authenticationService;
     private LoginCallBack callBack;
 
-    public LoginController(LoginPanel loginPanel, LoginCallBack callBack){
+    public LoginController(LoginPanel loginPanel,AuthenticationService authenticationService, LoginCallBack callBack){
         this.loginPanel = loginPanel;
-        this.authenticationService = new AuthenticationService();
+        this.authenticationService = authenticationService;
         this.callBack = callBack;
     }
 
@@ -30,8 +30,10 @@ public class LoginController {
                 callBack.onLoginSuccess(user);
             }
         } else {
-            showError("Invalid credentials or user type mismatch");
-            loginPanel.clearPassword();
+            if (callBack != null) {
+                callBack.onLoginError("Invalid credentials or user type mismatch");
+                loginPanel.clearPassword();
+            }
         }
     }
 
@@ -41,6 +43,7 @@ public class LoginController {
 
     public interface LoginCallBack {
         void onLoginSuccess(User user);
+        void onLoginError(String errorMessage);
     }
 }
 

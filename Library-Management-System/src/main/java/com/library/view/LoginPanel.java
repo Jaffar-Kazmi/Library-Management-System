@@ -5,8 +5,12 @@ import com.library.controller.LoginController;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class LoginPanel extends GradientPanel {
+
+    private static final String LAUNCH_PANEL = "Launch";
+
     private JLabel title;
 
     private JPanel usernamePanel;
@@ -108,15 +112,11 @@ public class LoginPanel extends GradientPanel {
                 controller.handleLogin(username, password, userType);
             }
         });
-
-        backButton.addActionListener((ActionEvent e) -> {
-            Container parent = getParent();
-            CardLayout layout = (CardLayout) parent.getLayout();
-            layout.show(parent, "launch");
-        });
-
     }
 
+    public void addBackListener(ActionListener listener) {
+        backButton.addActionListener(listener);
+    }
     public void clearPassword() {
         passField.setText("");
     }

@@ -42,6 +42,7 @@ public class ReaderDashboardPanel extends JPanel {
     private JPanel myBooksPanel;
     private JTable myBooksTable;
     private DefaultTableModel myBooksTableModel;
+    private MyBookActionsListener myBookActionsListener;
 
     // History panel components
     private JPanel historyPanel;
@@ -100,10 +101,10 @@ public class ReaderDashboardPanel extends JPanel {
         sidebarPanel.add(Box.createRigidArea(new Dimension(0, 40)));
 
         // Menu buttons
-        dashboardBtn = createSidebarButton("🏠  Dashboard", true);
-        browseBooksBtn = createSidebarButton("📚  Browse Books", false);
-        myBooksBtn = createSidebarButton("📖  My Books", false);
-        historyBtn = createSidebarButton("📜  History", false);
+        dashboardBtn = UIComponents.createSidebarButton("🏠  Dashboard", true, this::getSelectedButtonText);
+        browseBooksBtn = UIComponents.createSidebarButton("📚  Browse Books", false, this::getSelectedButtonText);
+        myBooksBtn = UIComponents.createSidebarButton("📖  My Books", false, this::getSelectedButtonText);
+        historyBtn = UIComponents.createSidebarButton("📜  History", false, this::getSelectedButtonText);
 
         sidebarPanel.add(dashboardBtn);
         sidebarPanel.add(Box.createRigidArea(new Dimension(0, 10)));
@@ -116,49 +117,11 @@ public class ReaderDashboardPanel extends JPanel {
         sidebarPanel.add(Box.createVerticalGlue());
 
         // Logout button at bottom
-        logoutBtn = createSidebarButton("🚪  Logout", false);
+        logoutBtn = UIComponents.createSidebarButton("🚪  Logout", false, this::getSelectedButtonText);
         logoutBtn.setBackground(Theme.INDIGO);
 
         sidebarPanel.add(logoutBtn);
         sidebarPanel.add(Box.createRigidArea(new Dimension(0, 20)));
-    }
-
-    private JButton createSidebarButton(String text, boolean selected) {
-        JButton button = new JButton(text);
-        button.setFont(Theme.NORMAL_FONT);
-        button.setForeground(Theme.VIOLET);
-        button.setMaximumSize(new Dimension(230, 50));
-        button.setAlignmentX(Component.CENTER_ALIGNMENT);
-        button.setFocusPainted(false);
-        button.setBorderPainted(false);
-        button.setContentAreaFilled(false);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setHorizontalAlignment(SwingConstants.LEFT);
-        button.setBorder(new EmptyBorder(10, 30, 10, 10));
-
-        if (selected) {
-            button.setOpaque(true);
-            button.setBackground(Theme.CYAN);
-        }
-
-        button.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                button.setOpaque(true);
-                button.setBackground(Theme.INDIGO);
-                button.setForeground(Theme.AQUA);
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                if (!button.getText().equals(getSelectedButtonText())) {
-                    button.setOpaque(false);
-                    button.setForeground(Theme.VIOLET);
-                }
-            }
-        });
-
-        return button;
     }
 
     private String selectedButton = "🏠  Dashboard";
@@ -214,10 +177,10 @@ public class ReaderDashboardPanel extends JPanel {
         JPanel statsPanel = new JPanel(new GridLayout(1, 4, 20, 0));
         statsPanel.setOpaque(false);
 
-        statsPanel.add(createStatCard("Books Borrowed", "3", "📚", new Color(106, 17, 203)));
-        statsPanel.add(createStatCard("Due Soon", "1", "⏰", new Color(251, 146, 60)));
-        statsPanel.add(createStatCard("Overdue", "0", "⚠️", new Color(220, 53, 69)));
-        statsPanel.add(createStatCard("Total Read", "24", "✅", new Color(52, 211, 153)));
+        statsPanel.add(UIComponents.createStatCard("Books Borrowed", "3", "📚", new Color(106, 17, 203)));
+        statsPanel.add(UIComponents.createStatCard("Due Soon", "1", "⏰", new Color(251, 146, 60)));
+        statsPanel.add(UIComponents.createStatCard("Overdue", "0", "⚠️", new Color(220, 53, 69)));
+        statsPanel.add(UIComponents.createStatCard("Total Read", "24", "✅", new Color(52, 211, 153)));
 
         // Currently borrowed books section
         JPanel borrowedPanel = new JPanel(new BorderLayout(10, 10));
@@ -327,43 +290,6 @@ public class ReaderDashboardPanel extends JPanel {
         card.add(iconLabel, BorderLayout.NORTH);
         card.add(detailsPanel, BorderLayout.CENTER);
         card.add(buttonPanel, BorderLayout.SOUTH);
-
-        return card;
-    }
-
-    private JPanel createStatCard(String title, String value, String icon, Color color) {
-        JPanel card = new JPanel();
-        card.setLayout(new BorderLayout(15, 10));
-        card.setBackground(Theme.AQUA);
-        card.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        // Icon
-        JLabel iconLabel = new JLabel(icon);
-        iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 40));
-        iconLabel.setOpaque(true);
-        iconLabel.setBackground(new Color(color.getRed(), color.getGreen(), color.getBlue(), 30));
-        iconLabel.setPreferredSize(new Dimension(70, 70));
-        iconLabel.setHorizontalAlignment(SwingConstants.CENTER);
-
-        // Text
-        JPanel textPanel = new JPanel();
-        textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
-        textPanel.setOpaque(false);
-
-        JLabel titleLabel = new JLabel(title);
-        titleLabel.setFont(Theme.SUB_HEADER_FONT);
-        titleLabel.setForeground(new Color(120, 120, 120));
-
-        JLabel valueLabel = new JLabel(value);
-        valueLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        valueLabel.setForeground(Theme.VIOLET);
-
-        textPanel.add(titleLabel);
-        textPanel.add(Box.createRigidArea(new Dimension(0, 5)));
-        textPanel.add(valueLabel);
-
-        card.add(iconLabel, BorderLayout.WEST);
-        card.add(textPanel, BorderLayout.CENTER);
 
         return card;
     }
@@ -710,81 +636,34 @@ public class ReaderDashboardPanel extends JPanel {
         String bookTitle = table.getValueAt(row, 0).toString();
         String dueDate = table.getValueAt(row, 3).toString();
 
-        JMenuItem viewDetails = createMenuItem("👁️ View Details", new Color(37, 117, 252));
-        JMenuItem renewBook = createMenuItem("🔄 Renew Book", new Color(52, 211, 153));
-        JMenuItem returnBook = createMenuItem("📥 Return Book", new Color(106, 17, 203));
+        JMenuItem viewDetails = UIComponents.createMenuItem("👁️ View Details", new Color(37, 117, 252));
+        JMenuItem renewBook = UIComponents.createMenuItem("🔄 Renew Book", new Color(52, 211, 153));
+        JMenuItem returnBook = UIComponents.createMenuItem("📥 Return Book", new Color(106, 17, 203));
 
         popup.add(viewDetails);
         popup.add(renewBook);
         popup.addSeparator();
         popup.add(returnBook);
 
-        viewDetails.addActionListener(e -> handleViewBookDetails(bookTitle));
-        renewBook.addActionListener(e -> handleRenewBook(bookTitle, row));
-        returnBook.addActionListener(e -> handleReturnBook(bookTitle, row));
-
-        popup.show(table, x, y);
-    }
-
-    private JMenuItem createMenuItem(String text, Color iconColor) {
-        JMenuItem item = new JMenuItem(text);
-        item.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        item.setBorder(new EmptyBorder(8, 10, 8, 10));
-        item.setBackground(Color.WHITE);
-        item.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        item.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                item.setBackground(new Color(245, 245, 250));
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                item.setBackground(Color.WHITE);
+        viewDetails.addActionListener(e -> {
+            if (myBookActionsListener != null) {
+                myBookActionsListener.onView(bookTitle, row);
             }
         });
 
-        return item;
-    }
+        renewBook.addActionListener(e -> {
+            if (myBookActionsListener != null) {
+                myBookActionsListener.onRenew(bookTitle, row);
+            }
+        });
 
-    private void handleViewBookDetails(String bookTitle) {
-        JOptionPane.showMessageDialog(this,
-                "Viewing details for:\n\n" + bookTitle,
-                "Book Details",
-                JOptionPane.INFORMATION_MESSAGE);
-    }
+        returnBook.addActionListener(e -> {
+            if (myBookActionsListener != null) {
+                myBookActionsListener.onReturn(bookTitle, row);
+            }
+        });
 
-    private void handleRenewBook(String bookTitle, int row) {
-        int confirm = JOptionPane.showConfirmDialog(this,
-                "Do you want to renew this book?\n\n" + bookTitle + "\n\nThis will extend the due date by 14 days.",
-                "Renew Book",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE);
-
-        if (confirm == JOptionPane.YES_OPTION) {
-            // Update due date (simplified - you'd calculate actual new date)
-            JOptionPane.showMessageDialog(this,
-                    "Book renewed successfully!\nNew due date has been updated.",
-                    "Success",
-                    JOptionPane.INFORMATION_MESSAGE);
-        }
-    }
-
-    private void handleReturnBook(String bookTitle, int row) {
-        int confirm = JOptionPane.showConfirmDialog(this,
-                "Are you sure you want to return this book?\n\n" + bookTitle,
-                "Return Book",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE);
-
-        if (confirm == JOptionPane.YES_OPTION) {
-            myBooksTableModel.removeRow(row);
-            JOptionPane.showMessageDialog(this,
-                    "Book returned successfully!",
-                    "Success",
-                    JOptionPane.INFORMATION_MESSAGE);
-        }
+        popup.show(table, x, y);
     }
 
     private void setupLayout() {
@@ -813,7 +692,50 @@ public class ReaderDashboardPanel extends JPanel {
         });
     }
 
+    public void setMyBooksData(Object[][] rows) {
+        myBooksTableModel.setRowCount(0);
+        for (Object[] row : rows) {
+            myBooksTableModel.addRow(row);
+        }
+    }
+
+    public void clearMyBooks() {
+        myBooksTableModel.setRowCount(0);
+    }
+
+    public void removeMyBookRow(int row) {
+        if (row >= 0 && row < myBooksTableModel.getRowCount()) {
+            myBooksTableModel.removeRow(row);
+        }
+    }
+
+    public void setHistoryData(Object[][] rows) {
+        historyTableModel.setRowCount(0);
+        for (Object[] row : rows) {
+            historyTableModel.addRow(row);
+        }
+    }
+
+    public void clearBrowseBooks() {
+        booksCardsContainer.removeAll();
+        booksCardsContainer.revalidate();
+        booksCardsContainer.repaint();
+    }
+
+    public void addBrowseBookCard(String title, String author, String category, boolean available) {
+        booksCardsContainer.add(createBookCard(title, author, category, available));
+    }
+
+    public void clearHistory() {
+        historyTableModel.setRowCount(0);
+    }
+
+
     // Public methods for adding listeners
+    public void setMyBookActionsListener(MyBookActionsListener listener) {
+        this.myBookActionsListener = listener;
+    }
+
     public void addDashboardListener(ActionListener listener) {
         dashboardBtn.addActionListener(listener);
     }
@@ -865,4 +787,11 @@ public class ReaderDashboardPanel extends JPanel {
     public String getBookSearchText() {
         return bookSearchField.getText();
     }
+
+    public interface MyBookActionsListener {
+        void onView(String bookTitle, int row);
+        void onRenew(String bookTitle, int row);
+        void onReturn(String bookTitle, int row);
+    }
+
 }
