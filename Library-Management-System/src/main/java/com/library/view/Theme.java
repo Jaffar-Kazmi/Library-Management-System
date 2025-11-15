@@ -9,9 +9,12 @@ public class Theme {
     public static final Color AQUA = new Color(214, 244, 237);
     public static final Color placeholderColor = Color.GRAY;
 
-    public static final Font PRIMARY_FONT = new Font("Arial", Font.BOLD, 32);
-    public static final Font SECONDARY_FONT = new Font("Arial", Font.BOLD, 18);
-    public static final Font SUBTITLE_FONT = new Font("Arial", Font.ITALIC, 18);
+    public static final Font PRIMARY_FONT = new Font("Segoe UI", Font.BOLD, 32);
+    public static final Font SECONDARY_FONT = new Font("Segoe UI", Font.BOLD, 18);
+    public static final Font NORMAL_FONT = new Font("Segoe UI", Font.PLAIN, 18);
+    public static final Font SUBTITLE_FONT = new Font("Segoe UI", Font.ITALIC, 18);
+    public static final Font HEADER_FONT = new Font("Segoe UI", Font.BOLD, 28);
+    public static final Font SUB_HEADER_FONT = new Font("Segoe UI", Font.PLAIN, 14);
 
 
 
