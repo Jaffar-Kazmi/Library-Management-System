@@ -1,13 +1,16 @@
 package com.library.view;
 
 import com.library.controller.LoginController;
+import com.library.model.Book;
 import com.library.model.Librarian;
 import com.library.model.Reader;
 import com.library.model.User;
 import com.library.service.AuthenticationService;
+import com.library.service.BookService;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 public class LibraryGUI extends JFrame implements LoginController.LoginCallBack {
 
@@ -32,6 +35,8 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
     private LoginController readerLoginController;
 
     private User currentUser;
+
+    private final BookService bookService = new BookService();
 
     public LibraryGUI() {
         setTitle("Good Books");
@@ -110,6 +115,10 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
         if(librarianDashboard == null) {
             librarianDashboard = new LibrarianDashboardPanel(librarian);
 
+            librarianDashboard.addBooksListener(e -> loadBooksintoLibrarianDashboard());
+
+            librarianDashboard.addAddBookButtonListener(e -> handleAddBook());
+
             librarianDashboard.setBookActionsListener(
                     new LibrarianDashboardPanel.BookActionsListener() {
                         @Override
@@ -119,21 +128,55 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                         }
 
                         @Override
-                        public void onEdit(String bookId, int row) {
-                            JOptionPane.showMessageDialog(librarianDashboard,
-                                    "Editing book ID: " + bookId);
+                        public void onEdit(String bookIsbn, int row) {
+                            Book original = bookService.findByISBN(bookIsbn);
+                            if (original == null) {
+                                JOptionPane.showMessageDialog(
+                                        librarianDashboard,
+                                        "Book not found for ISBN: " + bookIsbn,
+                                        "Error",
+                                        JOptionPane.ERROR_MESSAGE
+                                );
+                                return;
+                            }
+
+                            Book edited = BookDialog.showEditBookDialog(librarianDashboard, original);
+                            if (edited == null ) {
+                                return;
+                            }
+
+                            boolean ok = bookService.update(edited);
+                            if (!ok) {
+                                JOptionPane.showMessageDialog(
+                                        librarianDashboard,
+                                        "Failed to update book in database.",
+                                        "Error",
+                                        JOptionPane.ERROR_MESSAGE
+                                );
+                                return;
+                            }
+
+                            loadBooksintoLibrarianDashboard();
+
+                            JOptionPane.showMessageDialog(
+                                        librarianDashboard,
+                                        "Book record updated successfully",
+                                        "Success",
+                                        JOptionPane.INFORMATION_MESSAGE
+                            );
                         }
 
                         @Override
-                        public void onDelete(String bookId, int row) {
+                        public void onDelete(String bookIsbn, int row) {
+                            Book b = bookService.findByISBN(bookIsbn);
                             int confirm = JOptionPane.showConfirmDialog(
                                     librarianDashboard,
-                                    "Delete book " + bookId + "?",
+                                    "Delete book " + bookIsbn + "?",
                                     "Confirm Delete",
                                     JOptionPane.YES_NO_OPTION
                             );
                             if (confirm == JOptionPane.YES_OPTION) {
-                                // later: bookService.deleteBook(...)
+                                bookService.deleteById(b.getBookId());
                                 librarianDashboard.removeBookRow(row);
                             }
                         }
@@ -278,6 +321,66 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
         mainPanel.add(dashboard, "readerDashboard");
         CardLayout layout = (CardLayout) mainPanel.getLayout();
         layout.show(mainPanel, "readerDashboard");
+    }
+
+    private void loadBooksintoLibrarianDashboard() {
+        List<Book> books = bookService.findAll();
+
+        Object[][] rows = new Object[books.size()][6];
+        for (int i = 0; i < books.size(); i++) {
+            Book b = books.get(i);
+            String status = b.getAvailableCopies() > 0 ? "Available" : "Issued";
+            rows[i][0] = b.getIsbn();
+            rows[i][1] = b.getTitle();
+            rows[i][2] = b.getAuthor();
+            rows[i][3] = b.getCategory();
+            rows[i][4] = status;
+            rows[i][5] = "⋮";
+        }
+
+        librarianDashboard.setBooksData(rows);
+    }
+
+    private void handleAddBook() {
+        Book newBook = BookDialog.showAddDialog(librarianDashboard);
+        if (newBook == null) {
+            return;
+        }
+
+        boolean ok = bookService.add(newBook);
+        if (!ok) {
+            JOptionPane.showMessageDialog(
+                    librarianDashboard,
+                    "Failed to add book to database.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        loadBooksintoLibrarianDashboard();
+
+        JOptionPane.showMessageDialog(
+                librarianDashboard,
+                "Book added successfully.",
+                "Success",
+                JOptionPane.INFORMATION_MESSAGE
+        );
+    }
+
+    private void loadBooksIntoReaderBrowse(ReaderDashboardPanel readerDashboard) {
+        List<Book> books = bookService.findAvailable();
+
+        readerDashboard.clearBrowseBooks();
+        for (Book b : books) {
+            boolean available = b.getAvailableCopies() > 0;
+            readerDashboard.addBrowseBookCard(
+                    b.getTitle(),
+                    b.getAuthor(),
+                    b.getCategory(),
+                    available
+            );
+        }
     }
 
     private void handleLogout() {
