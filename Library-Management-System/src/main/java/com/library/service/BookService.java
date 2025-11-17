@@ -71,6 +71,37 @@ public class BookService {
         return null;
     }
 
+    public List<Book> search(String query) {
+        List<Book> books = new ArrayList<>();
+
+        String sql = "SELECT id, isbn, title, author, publisher, " +
+                "published_date, category, total_copies, available_copies " +
+                "FROM books " +
+                "WHERE LOWER(title) LIKE ? " +
+                "   OR LOWER(author) LIKE ? " +
+                "   OR LOWER(isbn) LIKE ?";
+
+        String pattern = "%" + query.toLowerCase() + "%";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, pattern);
+            ps.setString(2, pattern);
+            ps.setString(3, pattern);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    books.add(mapRowToBook(rs)); // reuse your helper
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return books;
+    }
+
     public boolean add(Book book) {
         String sql = "INSERT INTO books " +
                 "(isbn, title, author, publisher, published_date, category, total_copies, available_copies) " +
@@ -158,7 +189,6 @@ public class BookService {
         }
     }
 
-    // 7) Helpers to adjust available copies (for issue/return)
     public boolean decrementAvailableCopies(int bookId) {
         String sql = "UPDATE books SET available_copies = available_copies - 1 " +
                 "WHERE id = ? AND available_copies > 0";

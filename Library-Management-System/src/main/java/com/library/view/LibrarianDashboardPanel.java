@@ -512,6 +512,10 @@ public class LibrarianDashboardPanel extends JPanel {
         addBookBtn.addActionListener(listener);
     }
 
+    public void addSearchBookButtonListener(ActionListener listener) {
+        bookSearchField.addActionListener(listener);
+    }
+
     public void addBooksListener(ActionListener listener) {
         booksBtn.addActionListener(listener);
     }
@@ -604,6 +608,10 @@ public class LibrarianDashboardPanel extends JPanel {
 
     public JTable getUsersTable() {
         return usersTable;
+    }
+
+    public String getBooksSearchText() {
+        return bookSearchField.getText();
     }
 
     public void setBookActionsListener(BookActionsListener listener) {

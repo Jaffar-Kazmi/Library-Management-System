@@ -119,12 +119,23 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
 
             librarianDashboard.addAddBookButtonListener(e -> handleAddBook());
 
+            librarianDashboard.addSearchBookButtonListener(e -> handleSearchBook());
+
             librarianDashboard.setBookActionsListener(
                     new LibrarianDashboardPanel.BookActionsListener() {
                         @Override
-                        public void onView(String bookId, int row) {
-                            JOptionPane.showMessageDialog(librarianDashboard,
-                                    "Viewing details for book ID: " + bookId);
+                        public void onView(String bookIsbn, int row) {
+                            Book book = bookService.findByISBN(bookIsbn);
+                            if (book == null) {
+                                JOptionPane.showMessageDialog(
+                                        librarianDashboard,
+                                        "Book not found",
+                                        "Error",
+                                        JOptionPane.ERROR_MESSAGE
+                                );
+                                return;
+                            }
+                            BookDialog.showDetailsDialog(librarianDashboard, book);
                         }
 
                         @Override
@@ -366,6 +377,31 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                 "Success",
                 JOptionPane.INFORMATION_MESSAGE
         );
+    }
+
+    private void handleSearchBook() {
+        String query = librarianDashboard.getBooksSearchText().trim();
+
+        List<Book> books;
+        if (query.isEmpty()) {
+            books = bookService.findAll();
+        } else {
+            books = bookService.search(query);
+        }
+
+        Object[][] rows = new Object[books.size()][6];
+        for (int i = 0; i < books.size(); i++) {
+            Book b = books.get(i);
+            String status = b.getAvailableCopies() > 0 ? "Available" : "Issued";
+
+            rows[i][0] = b.getIsbn();
+            rows[i][1] = b.getTitle();
+            rows[i][2] = b.getAuthor();
+            rows[i][3] = b.getCategory();
+            rows[i][4] = status;
+            rows[i][5] = "⋮";
+        }
+        librarianDashboard.setBooksData(rows);
     }
 
     private void loadBooksIntoReaderBrowse(ReaderDashboardPanel readerDashboard) {
