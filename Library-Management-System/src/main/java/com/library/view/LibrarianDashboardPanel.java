@@ -40,6 +40,7 @@ public class LibrarianDashboardPanel extends JPanel {
     // Users panel components
     private JPanel usersPanel;
     private JTextField userSearchField;
+    private JButton addUserBtn;
     private JTable usersTable;
     private DefaultTableModel usersTableModel;
     private UserActionsListener userActionsListener;
@@ -320,7 +321,7 @@ public class LibrarianDashboardPanel extends JPanel {
                 new EmptyBorder(8, 12, 8, 12)
         ));
 
-        JButton addUserBtn = UIComponents.createActionButton("➕ Add User", Theme.INDIGO);
+        addUserBtn = UIComponents.createActionButton("➕ Add User", Theme.INDIGO);
 
         searchPanel.add(new JLabel("🔍"));
         searchPanel.add(userSearchField);
@@ -516,6 +517,15 @@ public class LibrarianDashboardPanel extends JPanel {
         bookSearchField.addActionListener(listener);
     }
 
+    public void addUserSearchListener(ActionListener listener) {
+        userSearchField.addActionListener(listener);
+    }
+
+
+    public void addAddUserButtonListener(ActionListener listener) {
+        addUserBtn.addActionListener(listener);
+    }
+
     public void addBooksListener(ActionListener listener) {
         booksBtn.addActionListener(listener);
     }
@@ -526,14 +536,6 @@ public class LibrarianDashboardPanel extends JPanel {
 
     public void addLogoutListener(ActionListener listener) {
         logoutBtn.addActionListener(listener);
-    }
-
-    public void addBookSearchListener(ActionListener listener) {
-        bookSearchField.addActionListener(listener);
-    }
-
-    public void addUserSearchListener(ActionListener listener) {
-        userSearchField.addActionListener(listener);
     }
 
     public Librarian getLibrarian() {
@@ -612,6 +614,10 @@ public class LibrarianDashboardPanel extends JPanel {
 
     public String getBooksSearchText() {
         return bookSearchField.getText();
+    }
+
+    public String getUserSearchText() {
+        return userSearchField.getText();
     }
 
     public void setBookActionsListener(BookActionsListener listener) {

@@ -7,9 +7,11 @@ import com.library.model.Reader;
 import com.library.model.User;
 import com.library.service.AuthenticationService;
 import com.library.service.BookService;
+import com.library.service.UserService;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class LibraryGUI extends JFrame implements LoginController.LoginCallBack {
@@ -37,6 +39,7 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
     private User currentUser;
 
     private final BookService bookService = new BookService();
+    private final UserService userService = new UserService();
 
     public LibraryGUI() {
         setTitle("Good Books");
@@ -115,7 +118,7 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
         if(librarianDashboard == null) {
             librarianDashboard = new LibrarianDashboardPanel(librarian);
 
-            librarianDashboard.addBooksListener(e -> loadBooksintoLibrarianDashboard());
+            librarianDashboard.addBooksListener(e -> loadBooksIntoLibrarianDashboard());
 
             librarianDashboard.addAddBookButtonListener(e -> handleAddBook());
 
@@ -167,7 +170,7 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                                 return;
                             }
 
-                            loadBooksintoLibrarianDashboard();
+                            loadBooksIntoLibrarianDashboard();
 
                             JOptionPane.showMessageDialog(
                                         librarianDashboard,
@@ -220,22 +223,71 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                     }
             );
 
+            librarianDashboard.addUsersListener(e -> loadUsersIntoLibrarianDashboard());
+
+            librarianDashboard.addAddUserButtonListener(e -> handleAddUser());
+
+            librarianDashboard.addUserSearchListener(e -> handleUserSearch());
+
             librarianDashboard.setUserActionsListener(
                     new LibrarianDashboardPanel.UserActionsListener() {
                         @Override
                         public void onView(String userId, int row) {
-                            JOptionPane.showMessageDialog(librarianDashboard,
-                                    "Viewing details for User ID: " + userId);
+                            User user = userService.findById(Integer.parseInt(userId));
+                            if (user == null) {
+                                JOptionPane.showMessageDialog(
+                                        librarianDashboard,
+                                        "User with Id " + userId + "not found",
+                                        "Error",
+                                        JOptionPane.ERROR_MESSAGE
+                                );
+                                return;
+                            }
+                            UserDialog.showDetailsDialog(librarianDashboard, user);
                         }
 
                         @Override
                         public void onEdit(String userId, int row) {
-                            JOptionPane.showMessageDialog(librarianDashboard,
-                                    "Editing details for User ID: " + userId);
+                            User original = userService.findById(Integer.parseInt(userId));
+                            if (original == null) {
+                                JOptionPane.showMessageDialog(
+                                        librarianDashboard,
+                                        "User not found",
+                                        "Error",
+                                        JOptionPane.ERROR_MESSAGE
+                                );
+                                return;
+                            }
+                            User edited = UserDialog.showEditDialog(librarianDashboard, original);
+                            if (edited == null) {
+                                return;
+                            }
+
+                            Boolean ok = userService.update(edited);
+                            if (!ok) {
+                                JOptionPane.showMessageDialog(
+                                        librarianDashboard,
+                                        "Failed to update user in database",
+                                        "Error",
+                                        JOptionPane.ERROR_MESSAGE
+                                );
+                                return;
+                            }
+
+                            loadUsersIntoLibrarianDashboard();
+
+                            JOptionPane.showMessageDialog(
+                                    librarianDashboard,
+                                    "User record updated successfully. ",
+                                    "Success",
+                                    JOptionPane.INFORMATION_MESSAGE
+                            );
                         }
 
                         @Override
                         public void onDelete(String userId, int row) {
+                            User user = userService.findById(Integer.parseInt(userId));
+
                             int confirm = JOptionPane.showConfirmDialog(
                                     librarianDashboard,
                                     "Delete User " + userId + "?",
@@ -243,7 +295,7 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                                     JOptionPane.YES_NO_OPTION
                             );
                             if (confirm == JOptionPane.YES_OPTION) {
-                                // later: userService.deleteBook(...)
+                                userService.deleteById(Integer.parseInt(userId));
                                 librarianDashboard.removeUserRow(row);
                             }
                         }
@@ -334,7 +386,7 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
         layout.show(mainPanel, "readerDashboard");
     }
 
-    private void loadBooksintoLibrarianDashboard() {
+    private void loadBooksIntoLibrarianDashboard() {
         List<Book> books = bookService.findAll();
 
         Object[][] rows = new Object[books.size()][6];
@@ -351,6 +403,24 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
 
         librarianDashboard.setBooksData(rows);
     }
+
+    private void loadUsersIntoLibrarianDashboard() {
+        List<User> users = userService.findAll();
+
+        Object[][] rows = new Object[users.size()][6]; // 6 columns
+        for (int i = 0; i < users.size(); i++) {
+            User u = users.get(i);
+            rows[i][0] = u.getId();                                    // ID
+            rows[i][1] = u.getFullName();                              // Name
+            rows[i][2] = u.getEmail() != null ? u.getEmail() : "-";   // Email
+            rows[i][3] = u.getRole();                                  // Role
+            rows[i][4] = u.getStatus();                                // Status
+            rows[i][5] = "⋮";                                          // Actions
+        }
+
+        librarianDashboard.setUsersData(rows);
+    }
+
 
     private void handleAddBook() {
         Book newBook = BookDialog.showAddDialog(librarianDashboard);
@@ -369,7 +439,7 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
             return;
         }
 
-        loadBooksintoLibrarianDashboard();
+        loadBooksIntoLibrarianDashboard();
 
         JOptionPane.showMessageDialog(
                 librarianDashboard,
@@ -377,6 +447,22 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                 "Success",
                 JOptionPane.INFORMATION_MESSAGE
         );
+    }
+
+    private void handleAddUser() {
+        User newUser = UserDialog.showAddDialog(librarianDashboard);
+        if (newUser == null) return;
+
+        boolean ok = userService.add(newUser);
+        if (!ok) {
+            JOptionPane.showMessageDialog(librarianDashboard,
+                    "Failed to add user.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        loadUsersIntoLibrarianDashboard();
+        JOptionPane.showMessageDialog(librarianDashboard,
+                "User added successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void handleSearchBook() {
@@ -402,6 +488,46 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
             rows[i][5] = "⋮";
         }
         librarianDashboard.setBooksData(rows);
+    }
+
+    private void handleUserSearch() {
+        String query = librarianDashboard.getUserSearchText().trim();
+
+        List<User> users;
+        if (query.isEmpty()) {
+            users = userService.findAll();
+        } else {
+            users = searchUsers(query);
+        }
+
+        Object[][] rows = new Object[users.size()][6]; // 6 columns
+        for (int i = 0; i < users.size(); i++) {
+            User u = users.get(i);
+            rows[i][0] = u.getId();                                    // ID
+            rows[i][1] = u.getFullName();                              // Name
+            rows[i][2] = u.getEmail() != null ? u.getEmail() : "-";   // Email
+            rows[i][3] = u.getRole();                                  // Role
+            rows[i][4] = u.getStatus();                                // Status
+            rows[i][5] = "⋮";                                          // Actions
+        }
+
+        librarianDashboard.setUsersData(rows);
+    }
+
+    private List<User> searchUsers(String query) {
+        List<User> allUsers = userService.findAll();
+        List<User> results = new ArrayList<>();
+        String lowerQuery = query.toLowerCase();
+
+        for (User u : allUsers) {
+            if (u.getUsername().toLowerCase().contains(lowerQuery) ||
+                    u.getFullName().toLowerCase().contains(lowerQuery) ||
+                    u.getRole().toLowerCase().contains(lowerQuery)) {
+                results.add(u);
+            }
+        }
+
+        return results;
     }
 
     private void loadBooksIntoReaderBrowse(ReaderDashboardPanel readerDashboard) {

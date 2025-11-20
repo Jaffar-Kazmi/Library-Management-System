@@ -9,4 +9,9 @@ public class Librarian extends User {
     public String getUserType() {
         return "Librarian";
     }
+
+    @Override
+    public String getRole() {
+        return "LIBRARIAN";
+    }
 }
