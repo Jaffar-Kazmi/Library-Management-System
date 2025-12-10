@@ -9,4 +9,9 @@ public class Reader extends User {
     public String getUserType() {
         return "Reader";
     }
+
+    @Override
+    public String getRole() {
+        return "READER";
+    }
 }

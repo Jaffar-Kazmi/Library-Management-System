@@ -32,6 +32,7 @@ public class LibrarianDashboardPanel extends JPanel {
     // Books panel components
     private JPanel booksPanel;
     private JTextField bookSearchField;
+    private JButton addBookBtn;
     private JTable booksTable;
     private DefaultTableModel booksTableModel;
     private BookActionsListener bookActionsListener;
@@ -39,6 +40,7 @@ public class LibrarianDashboardPanel extends JPanel {
     // Users panel components
     private JPanel usersPanel;
     private JTextField userSearchField;
+    private JButton addUserBtn;
     private JTable usersTable;
     private DefaultTableModel usersTableModel;
     private UserActionsListener userActionsListener;
@@ -248,7 +250,7 @@ public class LibrarianDashboardPanel extends JPanel {
                 new EmptyBorder(8, 12, 8, 12)
         ));
 
-        JButton addBookBtn = UIComponents.createActionButton("➕ Add Book", Theme.INDIGO);
+        addBookBtn = UIComponents.createActionButton("➕ Add Book", Theme.INDIGO);
 
         searchPanel.add(new JLabel("🔍"));
         searchPanel.add(bookSearchField);
@@ -269,13 +271,6 @@ public class LibrarianDashboardPanel extends JPanel {
                 return false;
             }
         };
-
-        // Sample data
-        booksTableModel.addRow(new Object[]{"BK001", "The Great Gatsby", "F. Scott Fitzgerald", "Fiction", "Available", "⋮"});
-        booksTableModel.addRow(new Object[]{"BK002", "To Kill a Mockingbird", "Harper Lee", "Fiction", "Issued", "⋮"});
-        booksTableModel.addRow(new Object[]{"BK003", "1984", "George Orwell", "Fiction", "Available", "⋮"});
-        booksTableModel.addRow(new Object[]{"BK004", "Pride and Prejudice", "Jane Austen", "Romance", "Available", "⋮"});
-        booksTableModel.addRow(new Object[]{"BK005", "The Catcher in the Rye", "J.D. Salinger", "Fiction", "Issued", "⋮"});
 
         booksTable = createStyledTable(booksTableModel);
 
@@ -326,7 +321,7 @@ public class LibrarianDashboardPanel extends JPanel {
                 new EmptyBorder(8, 12, 8, 12)
         ));
 
-        JButton addUserBtn = UIComponents.createActionButton("➕ Add User", Theme.INDIGO);
+        addUserBtn = UIComponents.createActionButton("➕ Add User", Theme.INDIGO);
 
         searchPanel.add(new JLabel("🔍"));
         searchPanel.add(userSearchField);
@@ -347,13 +342,6 @@ public class LibrarianDashboardPanel extends JPanel {
                 return false;
             }
         };
-
-        // Sample data
-        usersTableModel.addRow(new Object[]{"U001", "John Doe", "john@email.com", "Member", "Active", "⋮"});
-        usersTableModel.addRow(new Object[]{"U002", "Jane Smith", "jane@email.com", "Member", "Active", "⋮"});
-        usersTableModel.addRow(new Object[]{"U003", "Bob Johnson", "bob@email.com", "Premium", "Active", "⋮"});
-        usersTableModel.addRow(new Object[]{"U004", "Alice Williams", "alice@email.com", "Member", "Inactive", "⋮"});
-        usersTableModel.addRow(new Object[]{"U005", "Charlie Brown", "charlie@email.com", "Premium", "Active", "⋮"});
 
         usersTable = createStyledTable(usersTableModel);
 
@@ -521,6 +509,23 @@ public class LibrarianDashboardPanel extends JPanel {
         dashboardBtn.addActionListener(listener);
     }
 
+    public void addAddBookButtonListener(ActionListener listener) {
+        addBookBtn.addActionListener(listener);
+    }
+
+    public void addSearchBookButtonListener(ActionListener listener) {
+        bookSearchField.addActionListener(listener);
+    }
+
+    public void addUserSearchListener(ActionListener listener) {
+        userSearchField.addActionListener(listener);
+    }
+
+
+    public void addAddUserButtonListener(ActionListener listener) {
+        addUserBtn.addActionListener(listener);
+    }
+
     public void addBooksListener(ActionListener listener) {
         booksBtn.addActionListener(listener);
     }
@@ -531,14 +536,6 @@ public class LibrarianDashboardPanel extends JPanel {
 
     public void addLogoutListener(ActionListener listener) {
         logoutBtn.addActionListener(listener);
-    }
-
-    public void addBookSearchListener(ActionListener listener) {
-        bookSearchField.addActionListener(listener);
-    }
-
-    public void addUserSearchListener(ActionListener listener) {
-        userSearchField.addActionListener(listener);
     }
 
     public Librarian getLibrarian() {
@@ -613,6 +610,14 @@ public class LibrarianDashboardPanel extends JPanel {
 
     public JTable getUsersTable() {
         return usersTable;
+    }
+
+    public String getBooksSearchText() {
+        return bookSearchField.getText();
+    }
+
+    public String getUserSearchText() {
+        return userSearchField.getText();
     }
 
     public void setBookActionsListener(BookActionsListener listener) {
