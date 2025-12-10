@@ -239,7 +239,6 @@ public class BookService {
         return book;
     }
 
-    // BookService
     public int countAll() {
         String sql = "SELECT COUNT(*) FROM books";
         try (Connection conn = DatabaseConnection.getConnection();
