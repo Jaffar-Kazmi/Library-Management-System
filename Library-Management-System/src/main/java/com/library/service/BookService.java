@@ -238,4 +238,50 @@ public class BookService {
 
         return book;
     }
+
+    public int countAll() {
+        String sql = "SELECT COUNT(*) FROM books";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public int countAvailable() {
+        String sql = "SELECT SUM(available_copies) FROM books";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                int v = rs.getInt(1);
+                if (rs.wasNull()) return 0; // SUM can be NULL if no rows[web:298][web:293]
+                return v;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public int countTotalCopies() {
+        String sql = "SELECT SUM(total_copies) FROM books";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) {
+                int v = rs.getInt(1);
+                if (rs.wasNull()) return 0;
+                return v;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
 }

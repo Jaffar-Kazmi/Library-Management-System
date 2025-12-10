@@ -17,11 +17,6 @@ public class UserDialog {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final int DIALOG_WIDTH = 700;
 
-    /**
-     * Shows an add dialog for a new user.
-     * @param parent parent component
-     * @return new User, or null if cancelled
-     */
     public static User showAddDialog(Component parent) {
         JTextField usernameField = createStyledTextField("");
         JPasswordField passwordField = createStyledPasswordField("");
@@ -47,12 +42,7 @@ public class UserDialog {
                 emailField, roleCombo, statusCombo, null);
     }
 
-    /**
-     * Shows an edit dialog for an existing user.
-     * @param parent parent component for positioning
-     * @param original the user to edit
-     * @return edited User, or null if cancelled
-     */
+
     public static User showEditDialog(Component parent, User original) {
         JTextField usernameField = createStyledTextField(original.getUsername());
         JPasswordField passwordField = createStyledPasswordField(original.getPassword());

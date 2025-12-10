@@ -3,11 +3,8 @@ package com.library.view;
 import com.library.controller.LoginController;
 import com.library.model.Book;
 import com.library.model.Librarian;
-import com.library.model.Reader;
-import com.library.model.User;
-import com.library.service.AuthenticationService;
-import com.library.service.BookService;
-import com.library.service.UserService;
+import com.library.model.*;
+import com.library.service.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,7 +18,6 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
     private static final String LOGIN_READER_PANEL = "LoginReader";
     private static final String DASHBOARD_LIBRARIAN_PANEL = "DashboardLibrarian";
     private static final String DASHBOARD_READER_PANEL = "DashboardReader";
-
 
     private JPanel mainPanel;
     private CardLayout cardLayout;
@@ -40,6 +36,8 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
 
     private final BookService bookService = new BookService();
     private final UserService userService = new UserService();
+    private final LoanService loanService = new LoanService();
+    private final FineService fineService = new FineService();
 
     public LibraryGUI() {
         setTitle("Good Books");
@@ -55,10 +53,6 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
         launchPanel = new LaunchPanel();
         launchPanel.addLibrarianButtonListener(e -> showLibrarianLogin());
         launchPanel.addReaderButtonListener(e -> showReaderLogin());
-
-//        // dumy librarian
-//        launchPanel.addLibrarianButtonListener(e -> showLibrarianDashboard());
-//        launchPanel.addReaderButtonListener(e -> showReaderDashboard());
 
         librarianLoginPanel = new LoginPanel("Librarian");
         readerLoginPanel = new LoginPanel("Reader");
@@ -99,7 +93,7 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
 
         if (user instanceof Librarian) {
             showLibrarianDashboard((Librarian) user);
-        } else if (user instanceof Reader){
+        } else if (user instanceof Reader) {
             showReaderDashboard((Reader) user);
         }
     }
@@ -115,9 +109,16 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
     }
 
     private void showLibrarianDashboard(Librarian librarian) {
-        if(librarianDashboard == null) {
+        if (librarianDashboard == null) {
             librarianDashboard = new LibrarianDashboardPanel(librarian);
 
+            // Dashboard tab listener
+            librarianDashboard.addDashboardListener(e -> {
+                loadDashboardStats();
+                loadRecentActivity();
+            });
+
+            // Books tab listener
             librarianDashboard.addBooksListener(e -> loadBooksIntoLibrarianDashboard());
 
             librarianDashboard.addAddBookButtonListener(e -> handleAddBook());
@@ -155,7 +156,7 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                             }
 
                             Book edited = BookDialog.showEditBookDialog(librarianDashboard, original);
-                            if (edited == null ) {
+                            if (edited == null) {
                                 return;
                             }
 
@@ -173,10 +174,10 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                             loadBooksIntoLibrarianDashboard();
 
                             JOptionPane.showMessageDialog(
-                                        librarianDashboard,
-                                        "Book record updated successfully",
-                                        "Success",
-                                        JOptionPane.INFORMATION_MESSAGE
+                                    librarianDashboard,
+                                    "Book record updated successfully",
+                                    "Success",
+                                    JOptionPane.INFORMATION_MESSAGE
                             );
                         }
 
@@ -192,19 +193,14 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                             if (confirm == JOptionPane.YES_OPTION) {
                                 bookService.deleteById(b.getBookId());
                                 librarianDashboard.removeBookRow(row);
+                                loadDashboardStats(); // Refresh stats
+                                loadRecentActivity();
                             }
                         }
 
                         @Override
-                        public void onIssue(String bookId, int row) {
-                            String userId = JOptionPane.showInputDialog(
-                                    librarianDashboard,
-                                    "Enter User ID to issue this book:"
-                            );
-                            if (userId != null && !userId.trim().isEmpty()) {
-                                // later: loanService.issueBook(...)
-                                librarianDashboard.markBookIssued(row);
-                            }
+                        public void onIssue(String bookIsbn, int row) {
+                            handleIssueBook(bookIsbn, row);
                         }
 
                         @Override
@@ -218,11 +214,13 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                             if (confirm == JOptionPane.YES_OPTION) {
                                 // later: loanService.returnBook(...)
                                 librarianDashboard.markBookAvailable(row);
+                                loadDashboardStats(); // Refresh stats
                             }
                         }
                     }
             );
 
+            // Users tab listener
             librarianDashboard.addUsersListener(e -> loadUsersIntoLibrarianDashboard());
 
             librarianDashboard.addAddUserButtonListener(e -> handleAddUser());
@@ -237,7 +235,7 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                             if (user == null) {
                                 JOptionPane.showMessageDialog(
                                         librarianDashboard,
-                                        "User with Id " + userId + "not found",
+                                        "User with Id " + userId + " not found",
                                         "Error",
                                         JOptionPane.ERROR_MESSAGE
                                 );
@@ -275,10 +273,12 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                             }
 
                             loadUsersIntoLibrarianDashboard();
+                            loadDashboardStats(); // Refresh stats
+                            loadRecentActivity();
 
                             JOptionPane.showMessageDialog(
                                     librarianDashboard,
-                                    "User record updated successfully. ",
+                                    "User record updated successfully.",
                                     "Success",
                                     JOptionPane.INFORMATION_MESSAGE
                             );
@@ -286,8 +286,6 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
 
                         @Override
                         public void onDelete(String userId, int row) {
-                            User user = userService.findById(Integer.parseInt(userId));
-
                             int confirm = JOptionPane.showConfirmDialog(
                                     librarianDashboard,
                                     "Delete User " + userId + "?",
@@ -297,6 +295,8 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                             if (confirm == JOptionPane.YES_OPTION) {
                                 userService.deleteById(Integer.parseInt(userId));
                                 librarianDashboard.removeUserRow(row);
+                                loadDashboardStats(); // Refresh stats
+                                loadRecentActivity();
                             }
                         }
                     }
@@ -306,12 +306,44 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
 
             mainPanel.add(librarianDashboard, DASHBOARD_LIBRARIAN_PANEL);
         }
+
+        // Load initial dashboard data
+        loadDashboardStats();
+        loadRecentActivity();
+        loadBooksIntoLibrarianDashboard();
+        loadUsersIntoLibrarianDashboard();
+
         cardLayout.show(mainPanel, DASHBOARD_LIBRARIAN_PANEL);
     }
 
     private void showReaderDashboard(Reader reader) {
         if (readerDashboard == null) {
             readerDashboard = new ReaderDashboardPanel(reader);
+
+            // Dashboard tab listener
+            readerDashboard.addDashboardListener(e -> {
+                loadReaderDashboardData(reader);
+            });
+
+            // Browse Books tab listener - ADD THIS
+            readerDashboard.addBrowseBooksListener(e -> {
+                loadBooksIntoReaderBrowse();
+            });
+
+            // My Books tab listener
+            readerDashboard.addMyBooksListener(e -> {
+                loadReaderMyBooks(reader);
+            });
+
+            // History tab listener
+            readerDashboard.addHistoryListener(e -> {
+                loadReaderHistory(reader);
+            });
+
+            // Fines tab listener - ADD THIS
+            readerDashboard.addFinesListener(e -> {
+                loadReaderFines(reader);
+            });
 
             readerDashboard.setMyBookActionsListener(
                     new ReaderDashboardPanel.MyBookActionsListener() {
@@ -326,15 +358,13 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                         @Override
                         public void onRenew(String bookTitle, int row) {
                             int confirm = JOptionPane.showConfirmDialog(readerDashboard,
-                                    "Do you want to renew this book?\n\n" + bookTitle + "\n\nThis will extend the due date by 14 days.",
+                                    "Do you want to renew this book?\n\n" + bookTitle,
                                     "Renew Book",
-                                    JOptionPane.YES_NO_OPTION,
-                                    JOptionPane.QUESTION_MESSAGE);
+                                    JOptionPane.YES_NO_OPTION);
 
                             if (confirm == JOptionPane.YES_OPTION) {
-                                // Update due date
                                 JOptionPane.showMessageDialog(readerDashboard,
-                                        "Book renewed successfully!\nNew due date has been updated.",
+                                        "Book renewed successfully!",
                                         "Success",
                                         JOptionPane.INFORMATION_MESSAGE);
                             }
@@ -345,11 +375,12 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                             int confirm = JOptionPane.showConfirmDialog(readerDashboard,
                                     "Are you sure you want to return this book?\n\n" + bookTitle,
                                     "Return Book",
-                                    JOptionPane.YES_NO_OPTION,
-                                    JOptionPane.QUESTION_MESSAGE);
+                                    JOptionPane.YES_NO_OPTION);
 
                             if (confirm == JOptionPane.YES_OPTION) {
                                 readerDashboard.removeMyBookRow(row);
+                                loadReaderDashboardData(reader);
+                                loadReaderMyBooks(reader);
                                 JOptionPane.showMessageDialog(readerDashboard,
                                         "Book returned successfully!",
                                         "Success",
@@ -363,27 +394,68 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
 
             mainPanel.add(readerDashboard, DASHBOARD_READER_PANEL);
         }
+
+        // Load initial data for ALL tabs
+        loadReaderDashboardData(reader);
+        loadBooksIntoReaderBrowse();      // ← MAKE SURE THIS IS HERE
+        loadReaderMyBooks(reader);
+        loadReaderHistory(reader);
+        loadReaderFines(reader);
+
         cardLayout.show(mainPanel, DASHBOARD_READER_PANEL);
     }
 
-    // Dumy Librarian to bypass login
-    private void showLibrarianDashboard() {
-        Librarian dummyLibrarian = new Librarian("admin", "123", "Syed Jaffar Raza Kazmi"); // dummy object
-        LibrarianDashboardPanel dashboard = new LibrarianDashboardPanel(dummyLibrarian);
+    private void loadDashboardStats() {
+        int totalBooks = bookService.countAll();           // COUNT(*) = 3 books
+        int totalCopies = bookService.countTotalCopies();  // SUM(total_copies)
+        int availableCopies = bookService.countAvailable(); // SUM(available_copies) = 25
+        int totalUsers = userService.countAll();
+        int issuedCopies = totalCopies - availableCopies;  // Issued = total - available
 
-        mainPanel.add(dashboard, "librarianDashboard");
-        CardLayout layout = (CardLayout) mainPanel.getLayout();
-        layout.show(mainPanel, "librarianDashboard");
+        System.out.println("DEBUG stats -> books=" + totalBooks +
+                ", totalCopies=" + totalCopies +
+                ", availCopies=" + availableCopies +
+                ", users=" + totalUsers +
+                ", issuedCopies=" + issuedCopies);
+
+        librarianDashboard.setStats(totalBooks, issuedCopies, totalUsers, availableCopies);
     }
 
-    // Dumy Reader to bypass login
-    private void  showReaderDashboard(){
-        Reader dumyReader = new Reader("reader", "123", "Raza Kazmi");
-        ReaderDashboardPanel dashboard = new ReaderDashboardPanel(dumyReader);
+    // Load recent activity from real data
+    private void loadRecentActivity() {
+        List<Object[]> rows = new ArrayList<>();
 
-        mainPanel.add(dashboard, "readerDashboard");
-        CardLayout layout = (CardLayout) mainPanel.getLayout();
-        layout.show(mainPanel, "readerDashboard");
+        // Last 5 books as "Book Added"
+        List<Book> books = bookService.findAll();
+        for (int i = 0; i < Math.min(5, books.size()); i++) {
+            Book b = books.get(i);
+            rows.add(new Object[]{
+                    "-",
+                    "Book Added: " + b.getTitle(),
+                    b.getAuthor(),
+                    "✅ Completed"
+            });
+        }
+
+        // Last 5 users as "User Added"
+        List<User> users = userService.findAll();
+        for (int i = 0; i < Math.min(5, users.size()); i++) {
+            User u = users.get(i);
+            rows.add(new Object[]{
+                    "-",
+                    "User Added: " + u.getFullName(),
+                    u.getRole(),
+                    "✅ Completed"
+            });
+        }
+
+        // Convert to Object[][]
+        Object[][] data = new Object[rows.size()][4];
+        for (int i = 0; i < rows.size(); i++) {
+            data[i] = rows.get(i);
+        }
+
+        librarianDashboard.setActivityData(data);
     }
 
     private void loadBooksIntoLibrarianDashboard() {
@@ -407,20 +479,19 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
     private void loadUsersIntoLibrarianDashboard() {
         List<User> users = userService.findAll();
 
-        Object[][] rows = new Object[users.size()][6]; // 6 columns
+        Object[][] rows = new Object[users.size()][6];
         for (int i = 0; i < users.size(); i++) {
             User u = users.get(i);
-            rows[i][0] = u.getId();                                    // ID
-            rows[i][1] = u.getFullName();                              // Name
-            rows[i][2] = u.getEmail() != null ? u.getEmail() : "-";   // Email
-            rows[i][3] = u.getRole();                                  // Role
-            rows[i][4] = u.getStatus();                                // Status
-            rows[i][5] = "⋮";                                          // Actions
+            rows[i][0] = u.getId();
+            rows[i][1] = u.getFullName();
+            rows[i][2] = u.getEmail() != null ? u.getEmail() : "-";
+            rows[i][3] = u.getRole();
+            rows[i][4] = u.getStatus();
+            rows[i][5] = "⋮";
         }
 
         librarianDashboard.setUsersData(rows);
     }
-
 
     private void handleAddBook() {
         Book newBook = BookDialog.showAddDialog(librarianDashboard);
@@ -440,6 +511,8 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
         }
 
         loadBooksIntoLibrarianDashboard();
+        loadDashboardStats();
+        loadRecentActivity();
 
         JOptionPane.showMessageDialog(
                 librarianDashboard,
@@ -461,6 +534,9 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
         }
 
         loadUsersIntoLibrarianDashboard();
+        loadDashboardStats();
+        loadRecentActivity();
+
         JOptionPane.showMessageDialog(librarianDashboard,
                 "User added successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
     }
@@ -490,6 +566,188 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
         librarianDashboard.setBooksData(rows);
     }
 
+    private void handleIssueBook(String bookIsbn, int row) {
+        Book book = bookService.findByISBN(bookIsbn);
+        if (book == null) {
+            JOptionPane.showMessageDialog(
+                    librarianDashboard,
+                    "Book not found.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        // Check if book is available
+        if (book.getAvailableCopies() <= 0) {
+            JOptionPane.showMessageDialog(
+                    librarianDashboard,
+                    "No copies available for this book.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        // Show issue dialog
+        BookIssueDialog.IssueResult result = BookIssueDialog.showDialog(
+                (Frame) SwingUtilities.getWindowAncestor(librarianDashboard),
+                book
+        );
+
+        if (result == null) {
+            return; // User cancelled
+        }
+
+        System.out.println("DEBUG: currentUser = " + currentUser);
+        System.out.println("DEBUG: currentUser class = " + (currentUser != null ? currentUser.getClass().getName() : "null"));
+        System.out.println("DEBUG: currentUser ID = " + (currentUser != null ? currentUser.getId() : "null"));
+
+        // Get librarian ID if available
+        int librarianId = 0;
+        if (currentUser != null && currentUser instanceof Librarian) {
+            librarianId = currentUser.getId();
+            System.out.println("DEBUG: Setting librarian ID to " + librarianId);
+        }
+
+        if (librarianId == 0) {
+            System.err.println("WARNING: librarian_id is 0, this will fail!");
+            JOptionPane.showMessageDialog(
+                    librarianDashboard,
+                    "Unable to identify librarian. Please logout and login again.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        // Create loan with librarian ID
+        boolean loanCreated = loanService.issueBook(
+                book.getBookId(),
+                result.getReader().getId(),
+                librarianId,
+                result.getBorrowDate(),
+                result.getDueDate(),
+                null
+        );
+
+        if (!loanCreated) {
+            JOptionPane.showMessageDialog(
+                    librarianDashboard,
+                    "Failed to create loan record.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        // Decrement available copies
+        boolean copiesUpdated = bookService.decrementAvailableCopies(book.getBookId());
+        if (!copiesUpdated) {
+            JOptionPane.showMessageDialog(
+                    librarianDashboard,
+                    "Failed to update book inventory.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        // Update UI
+        loadBooksIntoLibrarianDashboard();
+        loadDashboardStats();
+        loadRecentActivity();
+
+        JOptionPane.showMessageDialog(
+                librarianDashboard,
+                "Book issued successfully to " + result.getReader().getFullName() + "!\n\n" +
+                        "Due Date: " + result.getDueDate(),
+                "Success",
+                JOptionPane.INFORMATION_MESSAGE
+        );
+    }
+
+    private void handleReturnBook(String bookIsbn, int row) {
+        Book book = bookService.findByISBN(bookIsbn);
+        if (book == null) {
+            JOptionPane.showMessageDialog(
+                    librarianDashboard,
+                    "Book not found.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        // Find active loan for this book
+        Loan activeLoan = loanService.findActiveLoanByBookId(book.getBookId());
+        if (activeLoan == null) {
+            JOptionPane.showMessageDialog(
+                    librarianDashboard,
+                    "No active loan found for this book.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        // Calculate fine if overdue
+        double fine = fineService.calculateFineForLoan(activeLoan);
+
+        String message = "Return book: " + book.getTitle() + "?";
+        if (fine > 0) {
+            message += "\n\n⚠️ This book is overdue!\nFine amount: Rs " + String.format("%.2f", fine);
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(
+                librarianDashboard,
+                message,
+                "Return Book",
+                JOptionPane.YES_NO_OPTION
+        );
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            // Mark loan as returned
+            boolean loanReturned = loanService.returnBook(activeLoan.getLoanId());
+            if (!loanReturned) {
+                JOptionPane.showMessageDialog(
+                        librarianDashboard,
+                        "Failed to return book.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            // Increment available copies
+            bookService.incrementAvailableCopies(book.getBookId());
+
+            // Create fine record if overdue
+            if (fine > 0) {
+                Fine fineRecord = new Fine(activeLoan.getLoanId(), activeLoan.getReaderId(), fine);
+                fineService.addFine(fineRecord);
+            }
+
+            // Update UI
+            loadBooksIntoLibrarianDashboard();
+            loadDashboardStats();
+            loadRecentActivity();
+
+            String successMsg = "Book returned successfully!";
+            if (fine > 0) {
+                successMsg += "\n\nFine of Rs " + String.format("%.2f", fine) + " has been recorded.";
+            }
+
+            JOptionPane.showMessageDialog(
+                    librarianDashboard,
+                    successMsg,
+                    "Success",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+        }
+    }
+
+
     private void handleUserSearch() {
         String query = librarianDashboard.getUserSearchText().trim();
 
@@ -500,15 +758,15 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
             users = searchUsers(query);
         }
 
-        Object[][] rows = new Object[users.size()][6]; // 6 columns
+        Object[][] rows = new Object[users.size()][6];
         for (int i = 0; i < users.size(); i++) {
             User u = users.get(i);
-            rows[i][0] = u.getId();                                    // ID
-            rows[i][1] = u.getFullName();                              // Name
-            rows[i][2] = u.getEmail() != null ? u.getEmail() : "-";   // Email
-            rows[i][3] = u.getRole();                                  // Role
-            rows[i][4] = u.getStatus();                                // Status
-            rows[i][5] = "⋮";                                          // Actions
+            rows[i][0] = u.getId();
+            rows[i][1] = u.getFullName();
+            rows[i][2] = u.getEmail() != null ? u.getEmail() : "-";
+            rows[i][3] = u.getRole();
+            rows[i][4] = u.getStatus();
+            rows[i][5] = "⋮";
         }
 
         librarianDashboard.setUsersData(rows);
@@ -530,8 +788,43 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
         return results;
     }
 
-    private void loadBooksIntoReaderBrowse(ReaderDashboardPanel readerDashboard) {
-        List<Book> books = bookService.findAvailable();
+    private void loadReaderDashboardData(Reader reader) {
+        int borrowed = loanService.countActiveLoansByReaderId(reader.getId());
+        int dueSoon = loanService.countDueSoonByReaderId(reader.getId(), 7);
+        int overdue = loanService.countOverdueByReaderId(reader.getId());
+        int totalRead = loanService.countTotalReadByReaderId(reader.getId());
+
+        System.out.println("DEBUG: Reader stats - borrowed=" + borrowed + ", dueSoon=" + dueSoon +
+                ", overdue=" + overdue + ", totalRead=" + totalRead);
+
+        readerDashboard.setDashboardStats(borrowed, dueSoon, overdue, totalRead);
+
+        // Generate fines for overdue loans
+        loanService.generateFinesForOverdueLoans();
+
+        // Load unpaid fines amount
+        double unpaidFines = fineService.getTotalUnpaidFinesByReaderId(reader.getId());
+        readerDashboard.setUnpaidFines(unpaidFines);
+
+        // Load borrowed cards
+        readerDashboard.clearBorrowedCards();
+        List<Loan> activeLoans = loanService.findActiveLoansByReaderId(reader.getId());
+        for (Loan loan : activeLoans) {
+            double fine = fineService.calculateFineForLoan(loan);
+            readerDashboard.addBorrowedCard(
+                    loan.getBookTitle(),
+                    loan.getBookAuthor(),
+                    loan.getBorrowedDate(),
+                    loan.getDueDate(),
+                    fine
+            );
+        }
+    }
+
+    private void loadBooksIntoReaderBrowse() {
+        List<Book> books = bookService.findAll();
+
+        System.out.println("DEBUG: Loading " + books.size() + " books into reader browse");
 
         readerDashboard.clearBrowseBooks();
         for (Book b : books) {
@@ -539,8 +832,219 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
             readerDashboard.addBrowseBookCard(
                     b.getTitle(),
                     b.getAuthor(),
-                    b.getCategory(),
+                    b.getCategory() != null ? b.getCategory() : "General",
                     available
+            );
+        }
+    }
+
+    private void loadReaderMyBooks(Reader reader) {
+        List<Loan> loans = loanService.findActiveLoansByReaderId(reader.getId());
+
+        Object[][] rows = new Object[loans.size()][7]; // 7 columns (with Fine)
+        for (int i = 0; i < loans.size(); i++) {
+            Loan loan = loans.get(i);
+            long daysLeft = java.time.temporal.ChronoUnit.DAYS.between(java.time.LocalDate.now(), loan.getDueDate());
+            double fine = fineService.calculateFineForLoan(loan);
+
+            rows[i][0] = loan.getBookTitle();
+            rows[i][1] = loan.getBookAuthor();
+            rows[i][2] = loan.getBorrowedDate().toString();
+            rows[i][3] = loan.getDueDate().toString();
+            rows[i][4] = daysLeft + " days";
+            rows[i][5] = fine > 0 ? "Rs " + String.format("%.2f", fine) : "Rs 0";
+            rows[i][6] = "⋮";
+        }
+
+        readerDashboard.setMyBooksData(rows);
+    }
+
+    private void loadReaderHistory(Reader reader) {
+        List<Loan> history = loanService.findLoanHistoryByReaderId(reader.getId());
+
+        Object[][] rows = new Object[history.size()][5];
+        for (int i = 0; i < history.size(); i++) {
+            Loan loan = history.get(i);
+            rows[i][0] = loan.getBookTitle();
+            rows[i][1] = loan.getBookAuthor();
+            rows[i][2] = loan.getBorrowedDate().toString();
+            rows[i][3] = loan.getReturnDate() != null ? loan.getReturnDate().toString() : "-";
+            rows[i][4] = "✅ Returned";
+        }
+
+        readerDashboard.setHistoryData(rows);
+    }
+
+    private void loadReaderFines(Reader reader) {
+        List<Fine> fines = fineService.findAllFinesByReaderId(reader.getId());
+
+        Object[][] rows = new Object[fines.size()][5];
+        for (int i = 0; i < fines.size(); i++) {
+            Fine fine = fines.get(i);
+            rows[i][0] = fine.getLoanId();
+            rows[i][1] = "Rs " + String.format("%.2f", fine.getAmount());
+            rows[i][2] = fine.getStatus();
+            rows[i][3] = fine.getCreatedDate().toString();
+            rows[i][4] = fine.getPaidDate() != null ? fine.getPaidDate().toString() : "-";
+        }
+
+        readerDashboard.setFinesData(rows);
+    }
+
+    public void onIssue(String bookIsbn, int row) {
+        Book book = bookService.findByISBN(bookIsbn);
+        if (book == null) {
+            JOptionPane.showMessageDialog(
+                    librarianDashboard,
+                    "Book not found.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        // Check if book is available
+        if (book.getAvailableCopies() <= 0) {
+            JOptionPane.showMessageDialog(
+                    librarianDashboard,
+                    "No copies available for this book.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        // Show issue dialog
+        BookIssueDialog.IssueResult result = BookIssueDialog.showDialog(
+                (Frame) SwingUtilities.getWindowAncestor(librarianDashboard),
+                book
+        );
+
+        if (result == null) {
+            return; // User cancelled
+        }
+
+        // Create loan
+        boolean loanCreated = loanService.issueBook(
+                book.getBookId(),
+                result.getReader().getId(),
+                result.getBorrowDate(),
+                result.getDueDate()
+        );
+
+        if (!loanCreated) {
+            JOptionPane.showMessageDialog(
+                    librarianDashboard,
+                    "Failed to create loan record.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        // Decrement available copies
+        boolean copiesUpdated = bookService.decrementAvailableCopies(book.getBookId());
+        if (!copiesUpdated) {
+            JOptionPane.showMessageDialog(
+                    librarianDashboard,
+                    "Failed to update book inventory.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        // Update UI
+        loadBooksIntoLibrarianDashboard();
+        loadDashboardStats();
+        loadRecentActivity();
+
+        JOptionPane.showMessageDialog(
+                librarianDashboard,
+                "Book issued successfully to " + result.getReader().getFullName() + "!\n\n" +
+                        "Due Date: " + result.getDueDate(),
+                "Success",
+                JOptionPane.INFORMATION_MESSAGE
+        );
+    }
+
+    public void onReturn(String bookIsbn, int row) {
+        Book book = bookService.findByISBN(bookIsbn);
+        if (book == null) {
+            JOptionPane.showMessageDialog(
+                    librarianDashboard,
+                    "Book not found.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        // Find active loan for this book
+        Loan activeLoan = loanService.findActiveLoanByBookId(book.getBookId());
+        if (activeLoan == null) {
+            JOptionPane.showMessageDialog(
+                    librarianDashboard,
+                    "No active loan found for this book.",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        // Calculate fine if overdue
+        FineService fineService = new FineService();
+        double fine = fineService.calculateFineForLoan(activeLoan);
+
+        String message = "Return book: " + book.getTitle() + "?";
+        if (fine > 0) {
+            message += "\n\n⚠️ This book is overdue!\nFine amount: Rs " + String.format("%.2f", fine);
+        }
+
+        int confirm = JOptionPane.showConfirmDialog(
+                librarianDashboard,
+                message,
+                "Return Book",
+                JOptionPane.YES_NO_OPTION
+        );
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            // Mark loan as returned
+            boolean loanReturned = loanService.returnBook(activeLoan.getLoanId());
+            if (!loanReturned) {
+                JOptionPane.showMessageDialog(
+                        librarianDashboard,
+                        "Failed to return book.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            // Increment available copies
+            bookService.incrementAvailableCopies(book.getBookId());
+
+            // Create fine record if overdue
+            if (fine > 0) {
+                Fine fineRecord = new Fine(activeLoan.getLoanId(), activeLoan.getReaderId(), fine);
+                fineService.addFine(fineRecord);
+            }
+
+            // Update UI
+            loadBooksIntoLibrarianDashboard();
+            loadDashboardStats();
+            loadRecentActivity();
+
+            String successMsg = "Book returned successfully!";
+            if (fine > 0) {
+                successMsg += "\n\nFine of Rs " + String.format("%.2f", fine) + " has been recorded.";
+            }
+
+            JOptionPane.showMessageDialog(
+                    librarianDashboard,
+                    successMsg,
+                    "Success",
+                    JOptionPane.INFORMATION_MESSAGE
             );
         }
     }

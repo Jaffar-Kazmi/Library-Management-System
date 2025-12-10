@@ -28,6 +28,11 @@ public class LibrarianDashboardPanel extends JPanel {
 
     // Dashboard components
     private JPanel dashboardPanel;
+    private DefaultTableModel activityTableModel;
+    private JLabel totalBooksLabel;
+    private JLabel issuedBooksLabel;
+    private JLabel totalUsersLabel;
+    private JLabel availableBooksLabel;
 
     // Books panel components
     private JPanel booksPanel;
@@ -44,7 +49,6 @@ public class LibrarianDashboardPanel extends JPanel {
     private JTable usersTable;
     private DefaultTableModel usersTableModel;
     private UserActionsListener userActionsListener;
-
 
     public LibrarianDashboardPanel(Librarian librarian) {
         this.librarian = librarian;
@@ -160,13 +164,27 @@ public class LibrarianDashboardPanel extends JPanel {
         headerPanel.add(headerText);
 
         // Statistics cards
+        // Statistics cards
         JPanel statsPanel = new JPanel(new GridLayout(1, 4, 20, 0));
         statsPanel.setOpaque(false);
 
-        statsPanel.add(UIComponents.createStatCard("Total Books", "1,234", "📚", new Color(106, 17, 203)));
-        statsPanel.add(UIComponents.createStatCard("Issued Books", "234", "📤", new Color(37, 117, 252)));
-        statsPanel.add(UIComponents.createStatCard("Total Users", "456", "👥", new Color(52, 211, 153)));
-        statsPanel.add(UIComponents.createStatCard("Available", "1,000", "✅", new Color(251, 146, 60)));
+// Create stat cards and extract number labels
+        JPanel totalBooksCard = UIComponents.createStatCard("Total Books", "0", "📚", new Color(106, 17, 203));
+        totalBooksLabel = findNumberLabelInCard(totalBooksCard);
+
+        JPanel issuedBooksCard = UIComponents.createStatCard("Issued Books", "0", "📤", new Color(37, 117, 252));
+        issuedBooksLabel = findNumberLabelInCard(issuedBooksCard);
+
+        JPanel totalUsersCard = UIComponents.createStatCard("Total Users", "0", "👥", new Color(52, 211, 153));
+        totalUsersLabel = findNumberLabelInCard(totalUsersCard);
+
+        JPanel availableBooksCard = UIComponents.createStatCard("Available", "0", "✅", new Color(251, 146, 60));
+        availableBooksLabel = findNumberLabelInCard(availableBooksCard);
+
+        statsPanel.add(totalBooksCard);
+        statsPanel.add(issuedBooksCard);
+        statsPanel.add(totalUsersCard);
+        statsPanel.add(availableBooksCard);
 
         // Recent activity
         JPanel activityPanel = new JPanel(new BorderLayout(10, 10));
@@ -178,37 +196,15 @@ public class LibrarianDashboardPanel extends JPanel {
         activityTitle.setForeground(Theme.VIOLET);
 
         String[] columns = {"Time", "Activity", "User", "Status"};
-        Object[][] data = {
-                {"10:30 AM", "Book Issued", "John Doe", "✅ Completed"},
-                {"10:15 AM", "Book Returned", "Jane Smith", "✅ Completed"},
-                {"09:45 AM", "New User Added", "Bob Johnson", "✅ Completed"},
-                {"09:30 AM", "Book Updated", "System", "✅ Completed"},
-                {"10:30 AM", "Book Issued", "John Doe", "✅ Completed"},
-                {"10:15 AM", "Book Returned", "Jane Smith", "✅ Completed"},
-                {"09:45 AM", "New User Added", "Bob Johnson", "✅ Completed"},
-                {"09:30 AM", "Book Updated", "System", "✅ Completed"},
-                {"10:30 AM", "Book Issued", "John Doe", "✅ Completed"},
-                {"10:15 AM", "Book Returned", "Jane Smith", "✅ Completed"},
-                {"09:45 AM", "New User Added", "Bob Johnson", "✅ Completed"},
-                {"09:30 AM", "Book Updated", "System", "✅ Completed"},
-                {"10:30 AM", "Book Issued", "John Doe", "✅ Completed"},
-                {"10:15 AM", "Book Returned", "Jane Smith", "✅ Completed"},
-                {"09:45 AM", "New User Added", "Bob Johnson", "✅ Completed"},
-                {"09:30 AM", "Book Updated", "System", "✅ Completed"},
-                {"10:30 AM", "Book Issued", "John Doe", "✅ Completed"},
-                {"10:15 AM", "Book Returned", "Jane Smith", "✅ Completed"},
-                {"09:45 AM", "New User Added", "Bob Johnson", "✅ Completed"},
-                {"09:30 AM", "Book Updated", "System", "✅ Completed"}
-        };
 
-        DefaultTableModel activityModel = new DefaultTableModel(data, columns) {
+        activityTableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
         };
 
-        JTable activityTable = createStyledTable(activityModel);
+        JTable activityTable = createStyledTable(activityTableModel);
         JScrollPane activityScroll = new JScrollPane(activityTable);
         activityScroll.setBorder(null);
 
@@ -225,6 +221,37 @@ public class LibrarianDashboardPanel extends JPanel {
         panel.add(contentPanel, BorderLayout.CENTER);
 
         return panel;
+    }
+
+    private JLabel findNumberLabelInCard(JPanel card) {
+        for (Component c : card.getComponents()) {
+            if (c instanceof JLabel) {
+                JLabel label = (JLabel) c;
+                String text = label.getText();
+                if (text != null && (text.matches("\\d+") || text.equals("0"))) {
+                    return label;
+                }
+            } else if (c instanceof JPanel) {
+                JLabel found = findNumberLabelInCard((JPanel) c);
+                if (found != null) return found;
+            }
+        }
+        return new JLabel("0"); // fallback
+    }
+
+    private JLabel extractLabelFromCard(JPanel card, int labelIndex) {
+        // Helper to find label in the stat card
+        Component[] components = card.getComponents();
+        int labelCount = 0;
+        for (Component c : components) {
+            if (c instanceof JLabel) {
+                if (labelCount == labelIndex) {
+                    return (JLabel) c;
+                }
+                labelCount++;
+            }
+        }
+        return new JLabel("0"); // fallback
     }
 
     private JPanel createBooksPanel() {
@@ -439,7 +466,7 @@ public class LibrarianDashboardPanel extends JPanel {
                 if (bookActionsListener != null) bookActionsListener.onIssue(bookId, row);
             });
         } else if (status.equals("Issued")) {
-            JMenuItem returnBook = UIComponents.createMenuItem("📥 Return Book", new Color(106, 17, 203));;
+            JMenuItem returnBook = UIComponents.createMenuItem("📥 Return Book", new Color(106, 17, 203));
             popup.add(returnBook);
             returnBook.addActionListener(e -> {
                 if (bookActionsListener != null) bookActionsListener.onReturn(bookId, row);
@@ -521,7 +548,6 @@ public class LibrarianDashboardPanel extends JPanel {
         userSearchField.addActionListener(listener);
     }
 
-
     public void addAddUserButtonListener(ActionListener listener) {
         addUserBtn.addActionListener(listener);
     }
@@ -553,7 +579,7 @@ public class LibrarianDashboardPanel extends JPanel {
         booksTableModel.setRowCount(0);
     }
 
-    public void addBookRow(Object[] row){
+    public void addBookRow(Object[] row) {
         booksTableModel.addRow(row);
     }
 
@@ -595,7 +621,7 @@ public class LibrarianDashboardPanel extends JPanel {
     }
 
     public void removeUserRow(int row) {
-        if (row > 0 && row < usersTableModel.getRowCount()) {
+        if (row >= 0 && row < usersTableModel.getRowCount()) {
             usersTableModel.removeRow(row);
         }
     }
@@ -626,6 +652,20 @@ public class LibrarianDashboardPanel extends JPanel {
 
     public void setUserActionsListener(UserActionsListener listener) {
         this.userActionsListener = listener;
+    }
+
+    public void setActivityData(Object[][] rows) {
+        activityTableModel.setRowCount(0);
+        for (Object[] row : rows) {
+            activityTableModel.addRow(row);
+        }
+    }
+
+    public void setStats(int totalBooks, int issuedBooks, int totalUsers, int availableBooks) {
+        if (totalBooksLabel != null) totalBooksLabel.setText(String.valueOf(totalBooks));
+        if (issuedBooksLabel != null) issuedBooksLabel.setText(String.valueOf(issuedBooks));
+        if (totalUsersLabel != null) totalUsersLabel.setText(String.valueOf(totalUsers));
+        if (availableBooksLabel != null) availableBooksLabel.setText(String.valueOf(availableBooks));
     }
 
     public interface BookActionsListener {

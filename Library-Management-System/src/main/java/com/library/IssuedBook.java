@@ -1,5 +1,7 @@
 package com.library;
 
+import com.library.model.Book;
+
 import java.time.LocalDate;
 
 public class IssuedBook {
