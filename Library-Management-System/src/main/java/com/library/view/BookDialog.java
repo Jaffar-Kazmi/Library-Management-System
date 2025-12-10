@@ -15,12 +15,6 @@ public class BookDialog {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final int DIALOG_WIDTH = 700;
 
-    /**
-     * Shows an edit dialog for an existing book.
-     * @param parent parent component for positioning
-     * @param original the book to edit
-     * @return edited Book, or null if cancelled
-     */
     public static Book showEditBookDialog(Component parent, Book original) {
         JTextField isbnField = createStyledTextField(original.getIsbn());
         JTextField titleField = createStyledTextField(original.getTitle());
