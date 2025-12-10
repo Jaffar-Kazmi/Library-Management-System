@@ -398,6 +398,25 @@ public class ReaderDashboardPanel extends JPanel {
         returnBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         returnBtn.setPreferredSize(new Dimension(180, 35));
 
+        returnBtn.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(
+                    ReaderDashboardPanel.this,
+                    "Are you sure you want to return:\n" + title + "?",
+                    "Return Book",
+                    JOptionPane.YES_NO_OPTION
+            );
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                JOptionPane.showMessageDialog(
+                        ReaderDashboardPanel.this,
+                        "Return request submitted for: " + title,
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE
+                );
+                // You can also trigger a callback to LibraryGUI here if needed
+            }
+        });
+
         returnBtn.addMouseListener(new MouseAdapter() {
             public void mouseEntered(MouseEvent e) {
                 returnBtn.setBackground(Theme.VIOLET);
