@@ -22,7 +22,6 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
     private static final String DASHBOARD_LIBRARIAN_PANEL = "DashboardLibrarian";
     private static final String DASHBOARD_READER_PANEL = "DashboardReader";
 
-
     private JPanel mainPanel;
     private CardLayout cardLayout;
 
@@ -55,10 +54,6 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
         launchPanel = new LaunchPanel();
         launchPanel.addLibrarianButtonListener(e -> showLibrarianLogin());
         launchPanel.addReaderButtonListener(e -> showReaderLogin());
-
-//        // dumy librarian
-//        launchPanel.addLibrarianButtonListener(e -> showLibrarianDashboard());
-//        launchPanel.addReaderButtonListener(e -> showReaderDashboard());
 
         librarianLoginPanel = new LoginPanel("Librarian");
         readerLoginPanel = new LoginPanel("Reader");
@@ -99,7 +94,7 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
 
         if (user instanceof Librarian) {
             showLibrarianDashboard((Librarian) user);
-        } else if (user instanceof Reader){
+        } else if (user instanceof Reader) {
             showReaderDashboard((Reader) user);
         }
     }
@@ -115,9 +110,16 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
     }
 
     private void showLibrarianDashboard(Librarian librarian) {
-        if(librarianDashboard == null) {
+        if (librarianDashboard == null) {
             librarianDashboard = new LibrarianDashboardPanel(librarian);
 
+            // Dashboard tab listener
+            librarianDashboard.addDashboardListener(e -> {
+                loadDashboardStats();
+                loadRecentActivity();
+            });
+
+            // Books tab listener
             librarianDashboard.addBooksListener(e -> loadBooksIntoLibrarianDashboard());
 
             librarianDashboard.addAddBookButtonListener(e -> handleAddBook());
@@ -155,7 +157,7 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                             }
 
                             Book edited = BookDialog.showEditBookDialog(librarianDashboard, original);
-                            if (edited == null ) {
+                            if (edited == null) {
                                 return;
                             }
 
@@ -173,10 +175,10 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                             loadBooksIntoLibrarianDashboard();
 
                             JOptionPane.showMessageDialog(
-                                        librarianDashboard,
-                                        "Book record updated successfully",
-                                        "Success",
-                                        JOptionPane.INFORMATION_MESSAGE
+                                    librarianDashboard,
+                                    "Book record updated successfully",
+                                    "Success",
+                                    JOptionPane.INFORMATION_MESSAGE
                             );
                         }
 
@@ -192,6 +194,8 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                             if (confirm == JOptionPane.YES_OPTION) {
                                 bookService.deleteById(b.getBookId());
                                 librarianDashboard.removeBookRow(row);
+                                loadDashboardStats(); // Refresh stats
+                                loadRecentActivity();
                             }
                         }
 
@@ -204,6 +208,7 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                             if (userId != null && !userId.trim().isEmpty()) {
                                 // later: loanService.issueBook(...)
                                 librarianDashboard.markBookIssued(row);
+                                loadDashboardStats(); // Refresh stats
                             }
                         }
 
@@ -218,11 +223,13 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                             if (confirm == JOptionPane.YES_OPTION) {
                                 // later: loanService.returnBook(...)
                                 librarianDashboard.markBookAvailable(row);
+                                loadDashboardStats(); // Refresh stats
                             }
                         }
                     }
             );
 
+            // Users tab listener
             librarianDashboard.addUsersListener(e -> loadUsersIntoLibrarianDashboard());
 
             librarianDashboard.addAddUserButtonListener(e -> handleAddUser());
@@ -237,7 +244,7 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                             if (user == null) {
                                 JOptionPane.showMessageDialog(
                                         librarianDashboard,
-                                        "User with Id " + userId + "not found",
+                                        "User with Id " + userId + " not found",
                                         "Error",
                                         JOptionPane.ERROR_MESSAGE
                                 );
@@ -275,10 +282,12 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                             }
 
                             loadUsersIntoLibrarianDashboard();
+                            loadDashboardStats(); // Refresh stats
+                            loadRecentActivity();
 
                             JOptionPane.showMessageDialog(
                                     librarianDashboard,
-                                    "User record updated successfully. ",
+                                    "User record updated successfully.",
                                     "Success",
                                     JOptionPane.INFORMATION_MESSAGE
                             );
@@ -286,8 +295,6 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
 
                         @Override
                         public void onDelete(String userId, int row) {
-                            User user = userService.findById(Integer.parseInt(userId));
-
                             int confirm = JOptionPane.showConfirmDialog(
                                     librarianDashboard,
                                     "Delete User " + userId + "?",
@@ -297,6 +304,8 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                             if (confirm == JOptionPane.YES_OPTION) {
                                 userService.deleteById(Integer.parseInt(userId));
                                 librarianDashboard.removeUserRow(row);
+                                loadDashboardStats(); // Refresh stats
+                                loadRecentActivity();
                             }
                         }
                     }
@@ -306,6 +315,13 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
 
             mainPanel.add(librarianDashboard, DASHBOARD_LIBRARIAN_PANEL);
         }
+
+        // Load initial dashboard data
+        loadDashboardStats();
+        loadRecentActivity();
+        loadBooksIntoLibrarianDashboard();
+        loadUsersIntoLibrarianDashboard();
+
         cardLayout.show(mainPanel, DASHBOARD_LIBRARIAN_PANEL);
     }
 
@@ -332,7 +348,6 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                                     JOptionPane.QUESTION_MESSAGE);
 
                             if (confirm == JOptionPane.YES_OPTION) {
-                                // Update due date
                                 JOptionPane.showMessageDialog(readerDashboard,
                                         "Book renewed successfully!\nNew due date has been updated.",
                                         "Success",
@@ -366,24 +381,57 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
         cardLayout.show(mainPanel, DASHBOARD_READER_PANEL);
     }
 
-    // Dumy Librarian to bypass login
-    private void showLibrarianDashboard() {
-        Librarian dummyLibrarian = new Librarian("admin", "123", "Syed Jaffar Raza Kazmi"); // dummy object
-        LibrarianDashboardPanel dashboard = new LibrarianDashboardPanel(dummyLibrarian);
+    private void loadDashboardStats() {
+        int totalBooks = bookService.countAll();           // COUNT(*) = 3 books
+        int totalCopies = bookService.countTotalCopies();  // SUM(total_copies)
+        int availableCopies = bookService.countAvailable(); // SUM(available_copies) = 25
+        int totalUsers = userService.countAll();
+        int issuedCopies = totalCopies - availableCopies;  // Issued = total - available
 
-        mainPanel.add(dashboard, "librarianDashboard");
-        CardLayout layout = (CardLayout) mainPanel.getLayout();
-        layout.show(mainPanel, "librarianDashboard");
+        System.out.println("DEBUG stats -> books=" + totalBooks +
+                ", totalCopies=" + totalCopies +
+                ", availCopies=" + availableCopies +
+                ", users=" + totalUsers +
+                ", issuedCopies=" + issuedCopies);
+
+        librarianDashboard.setStats(totalBooks, issuedCopies, totalUsers, availableCopies);
     }
 
-    // Dumy Reader to bypass login
-    private void  showReaderDashboard(){
-        Reader dumyReader = new Reader("reader", "123", "Raza Kazmi");
-        ReaderDashboardPanel dashboard = new ReaderDashboardPanel(dumyReader);
+    // Load recent activity from real data
+    private void loadRecentActivity() {
+        List<Object[]> rows = new ArrayList<>();
 
-        mainPanel.add(dashboard, "readerDashboard");
-        CardLayout layout = (CardLayout) mainPanel.getLayout();
-        layout.show(mainPanel, "readerDashboard");
+        // Last 5 books as "Book Added"
+        List<Book> books = bookService.findAll();
+        for (int i = 0; i < Math.min(5, books.size()); i++) {
+            Book b = books.get(i);
+            rows.add(new Object[]{
+                    "-",
+                    "Book Added: " + b.getTitle(),
+                    b.getAuthor(),
+                    "✅ Completed"
+            });
+        }
+
+        // Last 5 users as "User Added"
+        List<User> users = userService.findAll();
+        for (int i = 0; i < Math.min(5, users.size()); i++) {
+            User u = users.get(i);
+            rows.add(new Object[]{
+                    "-",
+                    "User Added: " + u.getFullName(),
+                    u.getRole(),
+                    "✅ Completed"
+            });
+        }
+
+        // Convert to Object[][]
+        Object[][] data = new Object[rows.size()][4];
+        for (int i = 0; i < rows.size(); i++) {
+            data[i] = rows.get(i);
+        }
+
+        librarianDashboard.setActivityData(data);
     }
 
     private void loadBooksIntoLibrarianDashboard() {
@@ -407,20 +455,19 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
     private void loadUsersIntoLibrarianDashboard() {
         List<User> users = userService.findAll();
 
-        Object[][] rows = new Object[users.size()][6]; // 6 columns
+        Object[][] rows = new Object[users.size()][6];
         for (int i = 0; i < users.size(); i++) {
             User u = users.get(i);
-            rows[i][0] = u.getId();                                    // ID
-            rows[i][1] = u.getFullName();                              // Name
-            rows[i][2] = u.getEmail() != null ? u.getEmail() : "-";   // Email
-            rows[i][3] = u.getRole();                                  // Role
-            rows[i][4] = u.getStatus();                                // Status
-            rows[i][5] = "⋮";                                          // Actions
+            rows[i][0] = u.getId();
+            rows[i][1] = u.getFullName();
+            rows[i][2] = u.getEmail() != null ? u.getEmail() : "-";
+            rows[i][3] = u.getRole();
+            rows[i][4] = u.getStatus();
+            rows[i][5] = "⋮";
         }
 
         librarianDashboard.setUsersData(rows);
     }
-
 
     private void handleAddBook() {
         Book newBook = BookDialog.showAddDialog(librarianDashboard);
@@ -440,6 +487,8 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
         }
 
         loadBooksIntoLibrarianDashboard();
+        loadDashboardStats();
+        loadRecentActivity();
 
         JOptionPane.showMessageDialog(
                 librarianDashboard,
@@ -461,6 +510,9 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
         }
 
         loadUsersIntoLibrarianDashboard();
+        loadDashboardStats();
+        loadRecentActivity();
+
         JOptionPane.showMessageDialog(librarianDashboard,
                 "User added successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
     }
@@ -500,15 +552,15 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
             users = searchUsers(query);
         }
 
-        Object[][] rows = new Object[users.size()][6]; // 6 columns
+        Object[][] rows = new Object[users.size()][6];
         for (int i = 0; i < users.size(); i++) {
             User u = users.get(i);
-            rows[i][0] = u.getId();                                    // ID
-            rows[i][1] = u.getFullName();                              // Name
-            rows[i][2] = u.getEmail() != null ? u.getEmail() : "-";   // Email
-            rows[i][3] = u.getRole();                                  // Role
-            rows[i][4] = u.getStatus();                                // Status
-            rows[i][5] = "⋮";                                          // Actions
+            rows[i][0] = u.getId();
+            rows[i][1] = u.getFullName();
+            rows[i][2] = u.getEmail() != null ? u.getEmail() : "-";
+            rows[i][3] = u.getRole();
+            rows[i][4] = u.getStatus();
+            rows[i][5] = "⋮";
         }
 
         librarianDashboard.setUsersData(rows);
@@ -528,21 +580,6 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
         }
 
         return results;
-    }
-
-    private void loadBooksIntoReaderBrowse(ReaderDashboardPanel readerDashboard) {
-        List<Book> books = bookService.findAvailable();
-
-        readerDashboard.clearBrowseBooks();
-        for (Book b : books) {
-            boolean available = b.getAvailableCopies() > 0;
-            readerDashboard.addBrowseBookCard(
-                    b.getTitle(),
-                    b.getAuthor(),
-                    b.getCategory(),
-                    available
-            );
-        }
     }
 
     private void handleLogout() {
