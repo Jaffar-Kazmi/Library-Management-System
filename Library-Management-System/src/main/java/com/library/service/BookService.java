@@ -11,7 +11,7 @@ public class BookService {
 
     public List<Book> findAll() {
         List<Book> books = new ArrayList<>();
-        String sql = "select id, isbn, title, author, category, publisher, published_date, total_copies, available_copies, created_at from books";
+        String sql = "select id, isbn, title, author, category, published_date, total_copies, available_copies, created_at from books";
 
         try {
             Connection conn = DatabaseConnection.getConnection();
@@ -30,8 +30,7 @@ public class BookService {
 
     public List<Book> findAvailable() {
         List<Book> books = new ArrayList<>();
-        String sql = "select id, isbn, title, author, category, publisher, published_date, total_copies, available_copies, created_at from books where available_copies > 0";
-
+        String sql = "select id, isbn, title, author, category, published_date, total_copies, available_copies, created_at from books where available_copies > 0";
 
         try {
             Connection conn = DatabaseConnection.getConnection();
@@ -49,7 +48,7 @@ public class BookService {
     }
 
     public Book findByISBN(String isbn) {
-        String sql = "select id, isbn, title, author, category, publisher, published_date, total_copies, available_copies, created_at from books where isbn = ?";
+        String sql = "select id, isbn, title, author, category, published_date, total_copies, available_copies, created_at from books where isbn = ?";
 
         try {
             Connection conn = DatabaseConnection.getConnection();
@@ -74,7 +73,7 @@ public class BookService {
     public List<Book> search(String query) {
         List<Book> books = new ArrayList<>();
 
-        String sql = "SELECT id, isbn, title, author, publisher, " +
+        String sql = "SELECT id, isbn, title, author, " +
                 "published_date, category, total_copies, available_copies " +
                 "FROM books " +
                 "WHERE LOWER(title) LIKE ? " +
@@ -84,7 +83,7 @@ public class BookService {
         String pattern = "%" + query.toLowerCase() + "%";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, pattern);
             ps.setString(2, pattern);
@@ -92,7 +91,7 @@ public class BookService {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    books.add(mapRowToBook(rs)); // reuse your helper
+                    books.add(mapRowToBook(rs));
                 }
             }
         } catch (SQLException e) {
@@ -104,8 +103,8 @@ public class BookService {
 
     public boolean add(Book book) {
         String sql = "INSERT INTO books " +
-                "(isbn, title, author, publisher, published_date, category, total_copies, available_copies) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                "(isbn, title, author, published_date, category, total_copies, available_copies) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try {
             Connection conn = DatabaseConnection.getConnection();
@@ -114,24 +113,24 @@ public class BookService {
             ps.setString(1, book.getIsbn());
             ps.setString(2, book.getTitle());
             ps.setString(3, book.getAuthor());
-            ps.setString(4, book.getPublisher());
             if (book.getPublicationDate() != null) {
-                ps.setDate(5, Date.valueOf(book.getPublicationDate()));
+                ps.setDate(4, Date.valueOf(book.getPublicationDate()));
             } else {
-                ps.setNull(5, Types.DATE);
+                ps.setNull(4, Types.DATE);
             }
-            ps.setString(6, book.getCategory());
-            ps.setInt(7, book.getTotalCopies());
-            ps.setInt(8, book.getAvailableCopies());
+            ps.setString(5, book.getCategory());
+            ps.setInt(6, book.getTotalCopies());
+            ps.setInt(7, book.getAvailableCopies());
 
             int affected = ps.executeUpdate();
-            if (affected == 0) return false;
+            if (affected == 0)
+                return false;
 
             try {
                 ResultSet keys = ps.getGeneratedKeys();
-                    if (keys.next()) {
-                        book.setBookId(keys.getInt(1));
-                    }
+                if (keys.next()) {
+                    book.setBookId(keys.getInt(1));
+                }
                 return true;
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -145,26 +144,25 @@ public class BookService {
 
     public boolean update(Book book) {
         String sql = "UPDATE books SET " +
-                "isbn = ?, title = ?, author = ?, publisher = ?, " +
+                "isbn = ?, title = ?, author = ?, " +
                 "published_date = ?, category = ?, total_copies = ?, available_copies = ? " +
                 "WHERE id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, book.getIsbn());
             ps.setString(2, book.getTitle());
             ps.setString(3, book.getAuthor());
-            ps.setString(4, book.getPublisher());
             if (book.getPublicationDate() != null) {
-                ps.setDate(5, Date.valueOf(book.getPublicationDate()));
+                ps.setDate(4, Date.valueOf(book.getPublicationDate()));
             } else {
-                ps.setNull(5, Types.DATE);
+                ps.setNull(4, Types.DATE);
             }
-            ps.setString(6, book.getCategory());
-            ps.setInt(7, book.getTotalCopies());
-            ps.setInt(8, book.getAvailableCopies());
-            ps.setInt(9, book.getBookId());
+            ps.setString(5, book.getCategory());
+            ps.setInt(6, book.getTotalCopies());
+            ps.setInt(7, book.getAvailableCopies());
+            ps.setInt(8, book.getBookId());
 
             int affected = ps.executeUpdate();
             return affected > 0;
@@ -178,7 +176,7 @@ public class BookService {
         String sql = "DELETE FROM books WHERE id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, id);
             int affected = ps.executeUpdate();
@@ -194,7 +192,7 @@ public class BookService {
                 "WHERE id = ? AND available_copies > 0";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, bookId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -208,7 +206,7 @@ public class BookService {
                 "WHERE id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, bookId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -222,8 +220,7 @@ public class BookService {
                 rs.getString("isbn"),
                 rs.getString("title"),
                 rs.getString("author"),
-                rs.getString("publisher")
-        );
+                null);
 
         book.setBookId(rs.getInt("id"));
 
@@ -242,8 +239,8 @@ public class BookService {
     public int countAll() {
         String sql = "SELECT COUNT(*) FROM books";
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
                 return rs.getInt(1);
             }
@@ -256,11 +253,12 @@ public class BookService {
     public int countAvailable() {
         String sql = "SELECT SUM(available_copies) FROM books";
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
                 int v = rs.getInt(1);
-                if (rs.wasNull()) return 0; // SUM can be NULL if no rows[web:298][web:293]
+                if (rs.wasNull())
+                    return 0;
                 return v;
             }
         } catch (SQLException e) {
@@ -272,11 +270,12 @@ public class BookService {
     public int countTotalCopies() {
         String sql = "SELECT SUM(total_copies) FROM books";
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
             if (rs.next()) {
                 int v = rs.getInt(1);
-                if (rs.wasNull()) return 0;
+                if (rs.wasNull())
+                    return 0;
                 return v;
             }
         } catch (SQLException e) {

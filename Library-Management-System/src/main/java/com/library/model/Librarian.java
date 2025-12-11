@@ -1,8 +1,8 @@
 package com.library.model;
 
 public class Librarian extends User {
-    public Librarian(String username, String password, String fullName) {
-        super(username, password, fullName);
+    public Librarian(String username, String password, String fullName, String email) {
+        super(username, password, fullName, email);
     }
 
     @Override

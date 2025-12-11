@@ -28,26 +28,28 @@ public class LibrarianDashboardPanel extends JPanel {
 
     // Dashboard components
     private JPanel dashboardPanel;
-    private DefaultTableModel activityTableModel;
     private JLabel totalBooksLabel;
     private JLabel issuedBooksLabel;
     private JLabel totalUsersLabel;
     private JLabel availableBooksLabel;
+    private DefaultTableModel activityTableModel;
 
     // Books panel components
     private JPanel booksPanel;
-    private JTextField bookSearchField;
-    private JButton addBookBtn;
     private JTable booksTable;
     private DefaultTableModel booksTableModel;
+    private JTextField bookSearchField;
+    private JButton addBookBtn;
+    private JButton searchBookBtn;
     private BookActionsListener bookActionsListener;
 
     // Users panel components
     private JPanel usersPanel;
-    private JTextField userSearchField;
-    private JButton addUserBtn;
     private JTable usersTable;
     private DefaultTableModel usersTableModel;
+    private JTextField userSearchField;
+    private JButton addUserBtn;
+    private JButton searchUserBtn;
     private UserActionsListener userActionsListener;
 
     public LibrarianDashboardPanel(Librarian librarian) {
@@ -60,20 +62,16 @@ public class LibrarianDashboardPanel extends JPanel {
     }
 
     private void initializeComponents() {
-        // Initialize card layout
         cardLayout = new CardLayout();
         mainContentPanel = new JPanel(cardLayout);
         mainContentPanel.setBackground(Theme.CYAN);
 
-        // Create sidebar
         createSidebar();
 
-        // Create panels
         dashboardPanel = createDashboardPanel();
         booksPanel = createBooksPanel();
         usersPanel = createUsersPanel();
 
-        // Add panels to card layout
         mainContentPanel.add(dashboardPanel, "DASHBOARD");
         mainContentPanel.add(booksPanel, "BOOKS");
         mainContentPanel.add(usersPanel, "USERS");
@@ -84,7 +82,7 @@ public class LibrarianDashboardPanel extends JPanel {
         sidebarPanel.setLayout(new BoxLayout(sidebarPanel, BoxLayout.Y_AXIS));
         sidebarPanel.setPreferredSize(new Dimension(250, getHeight()));
 
-        // Logo/Header
+        // Logo
         JPanel logoPanel = new JPanel();
         logoPanel.setOpaque(false);
         logoPanel.setMaximumSize(new Dimension(250, 100));
@@ -99,10 +97,10 @@ public class LibrarianDashboardPanel extends JPanel {
         sidebarPanel.add(logoPanel);
         sidebarPanel.add(Box.createRigidArea(new Dimension(0, 40)));
 
-        // Menu buttons
+        // Buttons
         dashboardBtn = UIComponents.createSidebarButton("🏠  Dashboard", true, this::getSelectedButtonText);
-        booksBtn = UIComponents.createSidebarButton("📖  Books", false, this::getSelectedButtonText);
-        usersBtn = UIComponents.createSidebarButton("👥  Users", false, this::getSelectedButtonText);
+        booksBtn = UIComponents.createSidebarButton("📚  Manage Books", false, this::getSelectedButtonText);
+        usersBtn = UIComponents.createSidebarButton("👥  Manage Users", false, this::getSelectedButtonText);
 
         sidebarPanel.add(dashboardBtn);
         sidebarPanel.add(Box.createRigidArea(new Dimension(0, 10)));
@@ -112,10 +110,8 @@ public class LibrarianDashboardPanel extends JPanel {
 
         sidebarPanel.add(Box.createVerticalGlue());
 
-        // Logout button at bottom
         logoutBtn = UIComponents.createSidebarButton("🚪  Logout", false, this::getSelectedButtonText);
         logoutBtn.setBackground(Theme.INDIGO);
-
         sidebarPanel.add(logoutBtn);
         sidebarPanel.add(Box.createRigidArea(new Dimension(0, 20)));
     }
@@ -127,14 +123,16 @@ public class LibrarianDashboardPanel extends JPanel {
     }
 
     private void setSelectedButton(JButton button) {
-        // Reset all buttons
         dashboardBtn.setOpaque(false);
+        dashboardBtn.setForeground(Theme.VIOLET);
         booksBtn.setOpaque(false);
+        booksBtn.setForeground(Theme.VIOLET);
         usersBtn.setOpaque(false);
+        usersBtn.setForeground(Theme.VIOLET);
 
-        // Set selected button
         button.setOpaque(true);
         button.setBackground(Theme.INDIGO);
+        button.setForeground(Theme.AQUA);
         selectedButton = button.getText();
     }
 
@@ -146,72 +144,64 @@ public class LibrarianDashboardPanel extends JPanel {
         // Header
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
-
         JLabel titleLabel = new JLabel("Librarian Dashboard");
         titleLabel.setFont(Theme.HEADER_FONT);
         titleLabel.setForeground(Theme.VIOLET);
-
         JLabel welcomeLabel = new JLabel("Welcome back, " + librarian.getFullName());
         welcomeLabel.setFont(Theme.SUB_HEADER_FONT);
-        welcomeLabel.setForeground(new Color(120, 120, 120));
-
+        welcomeLabel.setForeground(Color.GRAY);
+        
         JPanel headerText = new JPanel();
         headerText.setLayout(new BoxLayout(headerText, BoxLayout.Y_AXIS));
         headerText.setOpaque(false);
         headerText.add(titleLabel);
+        headerText.add(Box.createRigidArea(new Dimension(0, 5)));
         headerText.add(welcomeLabel);
-
         headerPanel.add(headerText);
 
-        // Statistics cards
-        // Statistics cards
+        // Stats
         JPanel statsPanel = new JPanel(new GridLayout(1, 4, 20, 0));
         statsPanel.setOpaque(false);
+        statsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
 
-// Create stat cards and extract number labels
         JPanel totalBooksCard = UIComponents.createStatCard("Total Books", "0", "📚", new Color(106, 17, 203));
         totalBooksLabel = findNumberLabelInCard(totalBooksCard);
 
-        JPanel issuedBooksCard = UIComponents.createStatCard("Issued Books", "0", "📤", new Color(37, 117, 252));
+        JPanel issuedBooksCard = UIComponents.createStatCard("Issued Books", "0", "📤", new Color(251, 146, 60));
         issuedBooksLabel = findNumberLabelInCard(issuedBooksCard);
 
         JPanel totalUsersCard = UIComponents.createStatCard("Total Users", "0", "👥", new Color(52, 211, 153));
         totalUsersLabel = findNumberLabelInCard(totalUsersCard);
 
-        JPanel availableBooksCard = UIComponents.createStatCard("Available", "0", "✅", new Color(251, 146, 60));
-        availableBooksLabel = findNumberLabelInCard(availableBooksCard);
+        JPanel availBooksCard = UIComponents.createStatCard("Available", "0", "✅", new Color(37, 117, 252));
+        availableBooksLabel = findNumberLabelInCard(availBooksCard);
 
         statsPanel.add(totalBooksCard);
         statsPanel.add(issuedBooksCard);
         statsPanel.add(totalUsersCard);
-        statsPanel.add(availableBooksCard);
+        statsPanel.add(availBooksCard);
 
-        // Recent activity
-        JPanel activityPanel = new JPanel(new BorderLayout(10, 10));
-        activityPanel.setBackground(Theme.AQUA);
-        activityPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
+        // Activity Table
+        JPanel activityPanel = new JPanel(new BorderLayout());
+        activityPanel.setOpaque(false);
+        activityPanel.setBorder(new EmptyBorder(20, 0, 0, 0));
+        
         JLabel activityTitle = new JLabel("Recent Activity");
         activityTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
         activityTitle.setForeground(Theme.VIOLET);
-
-        String[] columns = {"Time", "Activity", "User", "Status"};
-
+        
+        String[] columns = {"ID", "Action", "Details", "Status"};
         activityTableModel = new DefaultTableModel(columns, 0) {
             @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
+            public boolean isCellEditable(int row, int column) { return false; }
         };
-
         JTable activityTable = createStyledTable(activityTableModel);
-        JScrollPane activityScroll = new JScrollPane(activityTable);
-        activityScroll.setBorder(null);
-
+        JScrollPane scrollPane = new JScrollPane(activityTable);
+        scrollPane.setBorder(null);
+        
         activityPanel.add(activityTitle, BorderLayout.NORTH);
-        activityPanel.add(activityScroll, BorderLayout.CENTER);
+        activityPanel.add(scrollPane, BorderLayout.CENTER);
 
-        // Layout
         JPanel contentPanel = new JPanel(new BorderLayout(20, 20));
         contentPanel.setOpaque(false);
         contentPanel.add(statsPanel, BorderLayout.NORTH);
@@ -223,92 +213,49 @@ public class LibrarianDashboardPanel extends JPanel {
         return panel;
     }
 
-    private JLabel findNumberLabelInCard(JPanel card) {
-        for (Component c : card.getComponents()) {
-            if (c instanceof JLabel) {
-                JLabel label = (JLabel) c;
-                String text = label.getText();
-                if (text != null && (text.matches("\\d+") || text.equals("0"))) {
-                    return label;
-                }
-            } else if (c instanceof JPanel) {
-                JLabel found = findNumberLabelInCard((JPanel) c);
-                if (found != null) return found;
-            }
-        }
-        return new JLabel("0"); // fallback
-    }
-
-    private JLabel extractLabelFromCard(JPanel card, int labelIndex) {
-        // Helper to find label in the stat card
-        Component[] components = card.getComponents();
-        int labelCount = 0;
-        for (Component c : components) {
-            if (c instanceof JLabel) {
-                if (labelCount == labelIndex) {
-                    return (JLabel) c;
-                }
-                labelCount++;
-            }
-        }
-        return new JLabel("0"); // fallback
-    }
-
     private JPanel createBooksPanel() {
         JPanel panel = new JPanel(new BorderLayout(20, 20));
         panel.setBackground(Theme.AQUA);
         panel.setBorder(new EmptyBorder(30, 30, 30, 30));
 
-        // Header with search
-        JPanel headerPanel = new JPanel(new BorderLayout(20, 0));
+        // Header
+        JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
-
-        JLabel titleLabel = new JLabel("Books Management");
+        JLabel titleLabel = new JLabel("Manage Books");
         titleLabel.setFont(Theme.HEADER_FONT);
         titleLabel.setForeground(Theme.VIOLET);
 
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        searchPanel.setOpaque(false);
+        JPanel actionsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        actionsPanel.setOpaque(false);
 
         bookSearchField = new JTextField(20);
-        bookSearchField.setFont(Theme.SUB_HEADER_FONT);
-        bookSearchField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
-                new EmptyBorder(8, 12, 8, 12)
-        ));
+        searchBookBtn = new JButton("Search");
+        addBookBtn = new JButton("+ Add Book");
+        
+        styleButton(searchBookBtn, Theme.INDIGO);
+        styleButton(addBookBtn, Theme.VIOLET);
 
-        addBookBtn = UIComponents.createActionButton("➕ Add Book", Theme.INDIGO);
-
-        searchPanel.add(new JLabel("🔍"));
-        searchPanel.add(bookSearchField);
-        searchPanel.add(addBookBtn);
+        actionsPanel.add(bookSearchField);
+        actionsPanel.add(searchBookBtn);
+        actionsPanel.add(addBookBtn);
 
         headerPanel.add(titleLabel, BorderLayout.WEST);
-        headerPanel.add(searchPanel, BorderLayout.EAST);
+        headerPanel.add(actionsPanel, BorderLayout.EAST);
 
-        // Books table
-        JPanel tablePanel = new JPanel(new BorderLayout());
-        tablePanel.setOpaque(false);
-        tablePanel.setBorder(new EmptyBorder(20, 20, 20, 20));
-
-        String[] columns = {"ISBN", "Book Title", "Author", "Category", "Status", "Actions"};
+        // Table
+        String[] columns = {"ISBN", "Title", "Author", "Category", "Status", "Actions"};
         booksTableModel = new DefaultTableModel(columns, 0) {
             @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
+            public boolean isCellEditable(int row, int column) { return false; }
         };
-
         booksTable = createStyledTable(booksTableModel);
-
-        // Add mouse listener for actions column
+        
         booksTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 int row = booksTable.rowAtPoint(e.getPoint());
                 int col = booksTable.columnAtPoint(e.getPoint());
-
-                if (row >= 0 && col == booksTable.getColumnCount() - 1) {
+                if (row >= 0 && col == 5) {
                     showBookActionsMenu(booksTable, row, e.getX(), e.getY());
                 }
             }
@@ -317,10 +264,8 @@ public class LibrarianDashboardPanel extends JPanel {
         JScrollPane scrollPane = new JScrollPane(booksTable);
         scrollPane.setBorder(null);
 
-        tablePanel.add(scrollPane, BorderLayout.CENTER);
-
         panel.add(headerPanel, BorderLayout.NORTH);
-        panel.add(tablePanel, BorderLayout.CENTER);
+        panel.add(scrollPane, BorderLayout.CENTER);
 
         return panel;
     }
@@ -330,56 +275,44 @@ public class LibrarianDashboardPanel extends JPanel {
         panel.setBackground(Theme.AQUA);
         panel.setBorder(new EmptyBorder(30, 30, 30, 30));
 
-        // Header with search
-        JPanel headerPanel = new JPanel(new BorderLayout(20, 0));
+        // Header
+        JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
-
-        JLabel titleLabel = new JLabel("Users Management");
+        JLabel titleLabel = new JLabel("Manage Users");
         titleLabel.setFont(Theme.HEADER_FONT);
         titleLabel.setForeground(Theme.VIOLET);
 
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        searchPanel.setOpaque(false);
+        JPanel actionsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        actionsPanel.setOpaque(false);
 
         userSearchField = new JTextField(20);
-        userSearchField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        userSearchField.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
-                new EmptyBorder(8, 12, 8, 12)
-        ));
+        searchUserBtn = new JButton("Search");
+        addUserBtn = new JButton("+ Add User");
 
-        addUserBtn = UIComponents.createActionButton("➕ Add User", Theme.INDIGO);
+        styleButton(searchUserBtn, Theme.INDIGO);
+        styleButton(addUserBtn, Theme.VIOLET);
 
-        searchPanel.add(new JLabel("🔍"));
-        searchPanel.add(userSearchField);
-        searchPanel.add(addUserBtn);
+        actionsPanel.add(userSearchField);
+        actionsPanel.add(searchUserBtn);
+        actionsPanel.add(addUserBtn);
 
         headerPanel.add(titleLabel, BorderLayout.WEST);
-        headerPanel.add(searchPanel, BorderLayout.EAST);
+        headerPanel.add(actionsPanel, BorderLayout.EAST);
 
-        // Users table
-        JPanel tablePanel = new JPanel(new BorderLayout());
-        tablePanel.setOpaque(false);
-        tablePanel.setBorder(new EmptyBorder(20, 20, 20, 20));
-
+        // Table
         String[] columns = {"ID", "Name", "Email", "Role", "Status", "Actions"};
         usersTableModel = new DefaultTableModel(columns, 0) {
             @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
+            public boolean isCellEditable(int row, int column) { return false; }
         };
-
         usersTable = createStyledTable(usersTableModel);
 
-        // Add mouse listener for actions column
         usersTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 int row = usersTable.rowAtPoint(e.getPoint());
                 int col = usersTable.columnAtPoint(e.getPoint());
-
-                if (row >= 0 && col == usersTable.getColumnCount() - 1) {
+                if (row >= 0 && col == 5) {
                     showUserActionsMenu(usersTable, row, e.getX(), e.getY());
                 }
             }
@@ -388,10 +321,8 @@ public class LibrarianDashboardPanel extends JPanel {
         JScrollPane scrollPane = new JScrollPane(usersTable);
         scrollPane.setBorder(null);
 
-        tablePanel.add(scrollPane, BorderLayout.CENTER);
-
         panel.add(headerPanel, BorderLayout.NORTH);
-        panel.add(tablePanel, BorderLayout.CENTER);
+        panel.add(scrollPane, BorderLayout.CENTER);
 
         return panel;
     }
@@ -405,14 +336,12 @@ public class LibrarianDashboardPanel extends JPanel {
         table.setSelectionBackground(Theme.CYAN);
         table.setSelectionForeground(Theme.VIOLET);
 
-        // Header styling
         table.getTableHeader().setFont(Theme.SUB_HEADER_FONT);
         table.getTableHeader().setBackground(Theme.INDIGO);
         table.getTableHeader().setForeground(Theme.AQUA);
         table.getTableHeader().setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(230, 230, 230)));
         table.getTableHeader().setPreferredSize(new Dimension(0, 45));
 
-        // Alternating row colors
         DefaultTableCellRenderer renderer = new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value,
@@ -429,83 +358,72 @@ public class LibrarianDashboardPanel extends JPanel {
         for (int i = 0; i < table.getColumnCount(); i++) {
             table.getColumnModel().getColumn(i).setCellRenderer(renderer);
         }
-
         return table;
+    }
+
+    private void styleButton(JButton btn, Color bg) {
+        btn.setBackground(bg);
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    }
+
+    private JLabel findNumberLabelInCard(JPanel card) {
+        for (Component c : card.getComponents()) {
+            if (c instanceof JPanel) {
+                for (Component sub : ((JPanel) c).getComponents()) {
+                    if (sub instanceof JLabel) {
+                        String text = ((JLabel) sub).getText();
+                        if (text.matches("\\d+")) return (JLabel) sub;
+                    }
+                }
+            }
+        }
+        return new JLabel("0");
     }
 
     private void showBookActionsMenu(JTable table, int row, int x, int y) {
         JPopupMenu popup = new JPopupMenu();
-        popup.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
+        String isbn = table.getValueAt(row, 0).toString();
 
-        String bookId = table.getValueAt(row, 0).toString();
-        String bookTitle = table.getValueAt(row, 1).toString();
-        String status = table.getValueAt(row, 4).toString();
+        JMenuItem view = UIComponents.createMenuItem("View Details", Theme.INDIGO);
+        JMenuItem edit = UIComponents.createMenuItem("Edit Book", Theme.VIOLET);
+        JMenuItem delete = UIComponents.createMenuItem("Delete Book", Color.RED);
+        JMenuItem issue = UIComponents.createMenuItem("Issue Book", new Color(52, 211, 153));
+        JMenuItem returnBook = UIComponents.createMenuItem("Return Book", new Color(251, 146, 60));
 
-        JMenuItem viewDetails = UIComponents.createMenuItem("👁️ View Details", new Color(37, 117, 252));
-        JMenuItem editBook = UIComponents.createMenuItem("✏️ Edit Book", new Color(251, 146, 60));
-        JMenuItem deleteBook = UIComponents.createMenuItem("🗑️ Delete Book", new Color(220, 53, 69));
+        view.addActionListener(e -> { if (bookActionsListener != null) bookActionsListener.onView(isbn, row); });
+        edit.addActionListener(e -> { if (bookActionsListener != null) bookActionsListener.onEdit(isbn, row); });
+        delete.addActionListener(e -> { if (bookActionsListener != null) bookActionsListener.onDelete(isbn, row); });
+        issue.addActionListener(e -> { if (bookActionsListener != null) bookActionsListener.onIssue(isbn, row); });
+        returnBook.addActionListener(e -> { if (bookActionsListener != null) bookActionsListener.onReturn(isbn, row); });
 
-        popup.add(viewDetails);
-        popup.add(editBook);
+        popup.add(view);
+        popup.add(edit);
+        popup.add(delete);
         popup.addSeparator();
-
-        viewDetails.addActionListener(e -> {
-            if (bookActionsListener != null) bookActionsListener.onView(bookId, row);
-        });
-        editBook.addActionListener(e -> {
-            if (bookActionsListener != null) bookActionsListener.onEdit(bookId, row);
-        });
-        deleteBook.addActionListener(e -> {
-            if (bookActionsListener != null) bookActionsListener.onDelete(bookId, row);
-        });
-
-        if (status.equals("Available")) {
-            JMenuItem issueBook = UIComponents.createMenuItem("\uD83D\uDCE4 Issue Book", new Color(52, 211, 153));
-            popup.add(issueBook);
-            issueBook.addActionListener(e -> {
-                if (bookActionsListener != null) bookActionsListener.onIssue(bookId, row);
-            });
-        } else if (status.equals("Issued")) {
-            JMenuItem returnBook = UIComponents.createMenuItem("📥 Return Book", new Color(106, 17, 203));
-            popup.add(returnBook);
-            returnBook.addActionListener(e -> {
-                if (bookActionsListener != null) bookActionsListener.onReturn(bookId, row);
-            });
-        }
-
-        popup.addSeparator();
-        popup.add(deleteBook);
+        popup.add(issue);
+        popup.add(returnBook);
 
         popup.show(table, x, y);
     }
 
     private void showUserActionsMenu(JTable table, int row, int x, int y) {
         JPopupMenu popup = new JPopupMenu();
-        popup.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
+        String id = table.getValueAt(row, 0).toString();
 
-        String userId = table.getValueAt(row, 0).toString();
-        String userName = table.getValueAt(row, 1).toString();
+        JMenuItem view = UIComponents.createMenuItem("View Details", Theme.INDIGO);
+        JMenuItem edit = UIComponents.createMenuItem("Edit User", Theme.VIOLET);
+        JMenuItem delete = UIComponents.createMenuItem("Delete User", Color.RED);
 
-        JMenuItem viewDetails = UIComponents.createMenuItem("👁️ View Details", new Color(37, 117, 252));
-        JMenuItem editUser = UIComponents.createMenuItem("✏️ Edit User", new Color(251, 146, 60));
-        JMenuItem deleteUser = UIComponents.createMenuItem("🗑️ Delete User", new Color(220, 53, 69));
+        view.addActionListener(e -> { if (userActionsListener != null) userActionsListener.onView(id, row); });
+        edit.addActionListener(e -> { if (userActionsListener != null) userActionsListener.onEdit(id, row); });
+        delete.addActionListener(e -> { if (userActionsListener != null) userActionsListener.onDelete(id, row); });
 
-        popup.add(viewDetails);
-        popup.add(editUser);
-        popup.addSeparator();
-        popup.add(deleteUser);
-
-        viewDetails.addActionListener(e -> {
-            if (userActionsListener != null) userActionsListener.onView(userId, row);
-        });
-
-        editUser.addActionListener(e -> {
-            if (userActionsListener != null) userActionsListener.onEdit(userId, row);
-        });
-
-        deleteUser.addActionListener(e -> {
-            if (userActionsListener != null) userActionsListener.onDelete(userId, row);
-        });
+        popup.add(view);
+        popup.add(edit);
+        popup.add(delete);
 
         popup.show(table, x, y);
     }
@@ -514,7 +432,6 @@ public class LibrarianDashboardPanel extends JPanel {
         add(sidebarPanel, BorderLayout.WEST);
         add(mainContentPanel, BorderLayout.CENTER);
 
-        // Set up navigation
         dashboardBtn.addActionListener(e -> {
             setSelectedButton(dashboardBtn);
             cardLayout.show(mainContentPanel, "DASHBOARD");
@@ -531,154 +448,65 @@ public class LibrarianDashboardPanel extends JPanel {
         });
     }
 
-    // Public methods for adding listeners
-    public void addDashboardListener(ActionListener listener) {
-        dashboardBtn.addActionListener(listener);
+    // Public methods for listeners and data
+    public void addDashboardListener(ActionListener l) { dashboardBtn.addActionListener(l); }
+    public void addBooksListener(ActionListener l) { booksBtn.addActionListener(l); }
+    public void addUsersListener(ActionListener l) { usersBtn.addActionListener(l); }
+    public void addLogoutListener(ActionListener l) { logoutBtn.addActionListener(l); }
+    
+    public void addAddBookButtonListener(ActionListener l) { addBookBtn.addActionListener(l); }
+    public void addSearchBookButtonListener(ActionListener l) { searchBookBtn.addActionListener(l); }
+    
+    public void addAddUserButtonListener(ActionListener l) { addUserBtn.addActionListener(l); }
+    public void addUserSearchListener(ActionListener l) { searchUserBtn.addActionListener(l); }
+
+    public void setBookActionsListener(BookActionsListener l) { this.bookActionsListener = l; }
+    public void setUserActionsListener(UserActionsListener l) { this.userActionsListener = l; }
+
+    public String getBooksSearchText() { return bookSearchField.getText(); }
+    public String getUserSearchText() { return userSearchField.getText(); }
+
+    public void setStats(int totalBooks, int issued, int users, int available) {
+        totalBooksLabel.setText(String.valueOf(totalBooks));
+        issuedBooksLabel.setText(String.valueOf(issued));
+        totalUsersLabel.setText(String.valueOf(users));
+        availableBooksLabel.setText(String.valueOf(available));
     }
 
-    public void addAddBookButtonListener(ActionListener listener) {
-        addBookBtn.addActionListener(listener);
+    public void setActivityData(Object[][] data) {
+        activityTableModel.setRowCount(0);
+        for (Object[] row : data) activityTableModel.addRow(row);
     }
 
-    public void addSearchBookButtonListener(ActionListener listener) {
-        bookSearchField.addActionListener(listener);
-    }
-
-    public void addUserSearchListener(ActionListener listener) {
-        userSearchField.addActionListener(listener);
-    }
-
-    public void addAddUserButtonListener(ActionListener listener) {
-        addUserBtn.addActionListener(listener);
-    }
-
-    public void addBooksListener(ActionListener listener) {
-        booksBtn.addActionListener(listener);
-    }
-
-    public void addUsersListener(ActionListener listener) {
-        usersBtn.addActionListener(listener);
-    }
-
-    public void addLogoutListener(ActionListener listener) {
-        logoutBtn.addActionListener(listener);
-    }
-
-    public Librarian getLibrarian() {
-        return librarian;
-    }
-
-    public void setBooksData(Object[][] rows) {
+    public void setBooksData(Object[][] data) {
         booksTableModel.setRowCount(0);
-        for (Object[] row : rows) {
-            booksTableModel.addRow(row);
-        }
+        for (Object[] row : data) booksTableModel.addRow(row);
     }
 
-    public void clearBooks() {
-        booksTableModel.setRowCount(0);
-    }
-
-    public void addBookRow(Object[] row) {
-        booksTableModel.addRow(row);
+    public void setUsersData(Object[][] data) {
+        usersTableModel.setRowCount(0);
+        for (Object[] row : data) usersTableModel.addRow(row);
     }
 
     public void removeBookRow(int row) {
-        if (row >= 0 && row < booksTableModel.getRowCount()) {
-            booksTableModel.removeRow(row);
-        }
-    }
-
-    public void markBookIssued(int row) {
-        if (row >= 0 && row < booksTableModel.getRowCount()) {
-            booksTableModel.setValueAt("Issued", row, 4); // column 4 = Status
-        }
-    }
-
-    public void markBookAvailable(int row) {
-        if (row >= 0 && row < booksTableModel.getRowCount()) {
-            booksTableModel.setValueAt("Available", row, 4);
-        }
-    }
-
-    public DefaultTableModel getBooksTableModel() {
-        return booksTableModel;
-    }
-
-    public void setUsersData(Object[][] rows) {
-        usersTableModel.setRowCount(0);
-        for (Object[] row : rows) {
-            usersTableModel.addRow(row);
-        }
-    }
-
-    public void clearUsers() {
-        usersTableModel.setRowCount(0);
-    }
-
-    public void addUserRow(Object[] row) {
-        usersTableModel.addRow(row);
+        if (row >= 0 && row < booksTableModel.getRowCount()) booksTableModel.removeRow(row);
     }
 
     public void removeUserRow(int row) {
-        if (row >= 0 && row < usersTableModel.getRowCount()) {
-            usersTableModel.removeRow(row);
-        }
-    }
-
-    public DefaultTableModel getUsersTableModel() {
-        return usersTableModel;
-    }
-
-    public JTable getBooksTable() {
-        return booksTable;
-    }
-
-    public JTable getUsersTable() {
-        return usersTable;
-    }
-
-    public String getBooksSearchText() {
-        return bookSearchField.getText();
-    }
-
-    public String getUserSearchText() {
-        return userSearchField.getText();
-    }
-
-    public void setBookActionsListener(BookActionsListener listener) {
-        this.bookActionsListener = listener;
-    }
-
-    public void setUserActionsListener(UserActionsListener listener) {
-        this.userActionsListener = listener;
-    }
-
-    public void setActivityData(Object[][] rows) {
-        activityTableModel.setRowCount(0);
-        for (Object[] row : rows) {
-            activityTableModel.addRow(row);
-        }
-    }
-
-    public void setStats(int totalBooks, int issuedBooks, int totalUsers, int availableBooks) {
-        if (totalBooksLabel != null) totalBooksLabel.setText(String.valueOf(totalBooks));
-        if (issuedBooksLabel != null) issuedBooksLabel.setText(String.valueOf(issuedBooks));
-        if (totalUsersLabel != null) totalUsersLabel.setText(String.valueOf(totalUsers));
-        if (availableBooksLabel != null) availableBooksLabel.setText(String.valueOf(availableBooks));
+        if (row >= 0 && row < usersTableModel.getRowCount()) usersTableModel.removeRow(row);
     }
 
     public interface BookActionsListener {
-        void onView(String bookId, int row);
-        void onEdit(String bookId, int row);
-        void onDelete(String bookId, int row);
-        void onIssue(String bookId, int row);
-        void onReturn(String bookId, int row);
+        void onView(String isbn, int row);
+        void onEdit(String isbn, int row);
+        void onDelete(String isbn, int row);
+        void onIssue(String isbn, int row);
+        void onReturn(String isbn, int row);
     }
 
     public interface UserActionsListener {
-        void onView(String userId, int row);
-        void onEdit(String userId, int row);
-        void onDelete(String userId, int row);
+        void onView(String id, int row);
+        void onEdit(String id, int row);
+        void onDelete(String id, int row);
     }
 }

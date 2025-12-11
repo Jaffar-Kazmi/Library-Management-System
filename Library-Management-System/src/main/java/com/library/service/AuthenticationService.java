@@ -12,12 +12,12 @@ import java.sql.SQLException;
 
 public class AuthenticationService {
 
-    public User authenticate(String username, String password, String userType){
-        String sql = "SELECT id, username, password, full_name, role " +
+    public User authenticate(String username, String password, String userType) {
+        String sql = "SELECT id, username, password, full_name, email, role " +
                 "FROM users WHERE username = ? AND password = ? AND role = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, username);
             ps.setString(2, password);
@@ -31,14 +31,14 @@ public class AuthenticationService {
 
                     User user;
                     if ("LIBRARIAN".equalsIgnoreCase(role)) {
-                        user = new Librarian(username, password, fullName);
+                        user = new Librarian(username, password, fullName, rs.getString("email"));
                     } else if ("READER".equalsIgnoreCase(role)) {
-                        user = new Reader(username, password, fullName);
+                        user = new Reader(username, password, fullName, rs.getString("email"));
                     } else {
                         return null;
                     }
 
-                    user.setId(userId);     // only this is needed
+                    user.setId(userId); // only this is needed
                     return user;
                 }
             }

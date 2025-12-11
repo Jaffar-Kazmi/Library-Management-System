@@ -13,19 +13,17 @@ import java.util.logging.Logger;
 
 public class BookManagement {
 
-    BufferedReader read;
     Scanner sc;
 
     ArrayList<Book> book = new ArrayList<>();
-    ArrayList<Order> order = new ArrayList<>() ;
+    ArrayList<Order> order = new ArrayList<>();
     ArrayList<IssuedBook> issuedBook = new ArrayList<>();
 
     File bookFile = new File("books.txt");
     File orderFile = new File("orders.txt");
     File issuedBookFile = new File("issuedbooks.txt");
 
-    BookManagement(BufferedReader read, Scanner sc) {
-        this.read = read;
+    BookManagement(Scanner sc) {
         this.sc = sc;
     }
 
@@ -41,16 +39,21 @@ public class BookManagement {
             Logger.getLogger(BookManagement.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             try {
-                writer.close();
+                if (writer != null)
+                    writer.close();
             } catch (IOException ex) {
                 Logger.getLogger(BookManagement.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
+
     private ArrayList<Book> readBooksFromFile() {
         ArrayList<Book> book = new ArrayList<>();
         BufferedReader reader = null;
         try {
+            if (!bookFile.exists()) {
+                return book;
+            }
             reader = new BufferedReader(new FileReader(bookFile));
             String line;
             try {
@@ -73,7 +76,8 @@ public class BookManagement {
             Logger.getLogger(BookManagement.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             try {
-                reader.close();
+                if (reader != null)
+                    reader.close();
             } catch (IOException ex) {
                 Logger.getLogger(BookManagement.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -86,23 +90,29 @@ public class BookManagement {
         try {
             writer = new BufferedWriter(new FileWriter(orderFile));
             for (Order o : order) {
-                writer.write(o.book.isbn + " | " + o.book.name + " | " + o.book.author + " | " + o.book.publishDate + " | " + o.orderedBy + " | " + o.orderedOn);
+                writer.write(o.book.isbn + " | " + o.book.name + " | " + o.book.author + " | " + o.book.publishDate
+                        + " | " + o.orderedBy + " | " + o.orderedOn);
                 writer.newLine();
             }
         } catch (IOException ex) {
             Logger.getLogger(BookManagement.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             try {
-                writer.close();
+                if (writer != null)
+                    writer.close();
             } catch (IOException ex) {
                 Logger.getLogger(BookManagement.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
+
     private ArrayList<Order> readOrdersFromFile() {
         ArrayList<Order> order = new ArrayList<>();
         BufferedReader reader = null;
         try {
+            if (!orderFile.exists()) {
+                return order;
+            }
             reader = new BufferedReader(new FileReader(orderFile));
             String line;
             try {
@@ -129,7 +139,8 @@ public class BookManagement {
             Logger.getLogger(BookManagement.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             try {
-                reader.close();
+                if (reader != null)
+                    reader.close();
             } catch (IOException ex) {
                 Logger.getLogger(BookManagement.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -142,29 +153,35 @@ public class BookManagement {
         try {
             writer = new BufferedWriter(new FileWriter(issuedBookFile));
             for (IssuedBook ib : issuedBook) {
-                writer.write(ib.book.isbn + " | " + ib.book.name + " | " + ib.book.author + " | " + ib.book.publishDate + " | " + ib.issuedTo + " | " + ib.dueDate);
+                writer.write(ib.book.isbn + " | " + ib.book.name + " | " + ib.book.author + " | " + ib.book.publishDate
+                        + " | " + ib.issuedTo + " | " + ib.dueDate);
                 writer.newLine();
             }
         } catch (IOException ex) {
             Logger.getLogger(BookManagement.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             try {
-                writer.close();
+                if (writer != null)
+                    writer.close();
             } catch (IOException ex) {
                 Logger.getLogger(BookManagement.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
-    private ArrayList<IssuedBook> readIssuedBooksFromFile(){
+
+    private ArrayList<IssuedBook> readIssuedBooksFromFile() {
         ArrayList<IssuedBook> issuedBook = new ArrayList<>();
         BufferedReader reader = null;
         try {
+            if (!issuedBookFile.exists()) {
+                return issuedBook;
+            }
             reader = new BufferedReader(new FileReader(issuedBookFile));
             String line;
             try {
-                while((line = reader.readLine()) != null){
+                while ((line = reader.readLine()) != null) {
                     String[] parts = line.split(" \\| ");
-                    if(parts.length == 6){
+                    if (parts.length == 6) {
                         String isbn = parts[0];
                         String name = parts[1];
                         String author = parts[2];
@@ -173,7 +190,7 @@ public class BookManagement {
                         Book book = new Book(isbn, name, author, publishDate);
                         String issuedTo = parts[4];
                         String date = parts[5];
-                        LocalDate dueDate = LocalDate.parse( date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                        LocalDate dueDate = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
                         issuedBook.add(new IssuedBook(book, issuedTo, dueDate));
                     }
                 }
@@ -184,7 +201,8 @@ public class BookManagement {
             Logger.getLogger(BookManagement.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             try {
-                reader.close();
+                if (reader != null)
+                    reader.close();
             } catch (IOException ex) {
                 Logger.getLogger(BookManagement.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -193,37 +211,39 @@ public class BookManagement {
     }
 
     void addBook() {
+        // Load existing books first to avoid overwriting
+        book = readBooksFromFile();
+
         try {
             System.out.print("Enter ISBN : ");
-            String isbn = read.readLine();
+            String isbn = sc.nextLine();
             System.out.print("Enter name : ");
-            String name = read.readLine();
+            String name = sc.nextLine();
             System.out.print("Enter Author's name : ");
-            String author = read.readLine();
+            String author = sc.nextLine();
             boolean validDate = false;
-            LocalDate publishDate = null ;
-            while(!validDate){
+            LocalDate publishDate = null;
+            while (!validDate) {
                 System.out.print("Enter publish date(yyyy-mm-dd) : ");
-                String date = read.readLine();
-                try{
+                String date = sc.nextLine();
+                try {
                     publishDate = (LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd")));
                     validDate = true;
-                }catch (DateTimeParseException e) {
+                } catch (DateTimeParseException e) {
                     System.out.println("Invalid date format. Please enter the date in yyyy-mm-dd format.");
                 }
             }
-            boolean isUnique = book.stream().noneMatch(bk -> bk.getISBN().equals(isbn));
-            if(isUnique){
+            // Check for uniqueness
+            String finalIsbn = isbn;
+            boolean isUnique = book.stream().noneMatch(bk -> bk.getISBN().equals(finalIsbn));
+            if (isUnique) {
                 book.add(new Book(isbn, name, author, publishDate));
                 saveBooksToFile(book);
                 System.out.println("Book added successfully...\n");
             } else {
                 System.out.println("Book with same ISBN already exists.");
             }
-        } catch (IOException ex) {
-            Logger.getLogger(BookManagement.class.getName()).log(Level.SEVERE, null, ex);
-            System.out.println("An I/O error occurred. Please try again.");
-        }catch (Exception ex) {
+        } catch (Exception ex) {
             Logger.getLogger(BookManagement.class.getName()).log(Level.SEVERE, null, ex);
             System.out.println("An unexpected error occurred. Please try again.");
         }
@@ -231,14 +251,14 @@ public class BookManagement {
 
     void searchBook() {
         book = readBooksFromFile();
-        if(book.isEmpty()){
+        if (book.isEmpty()) {
             System.out.println("No Books Available.");
             return;
         }
         try {
             boolean found = false;
             System.out.print("Enter ISBN of the book you want to search : ");
-            String isbn = read.readLine();
+            String isbn = sc.nextLine();
             for (Book b : book) {
                 if (b.getISBN().equals(isbn)) {
                     System.out.println("Details of the book are as under : ");
@@ -250,21 +270,21 @@ public class BookManagement {
             if (!found) {
                 System.out.println("Book not found");
             }
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             Logger.getLogger(BookManagement.class.getName()).log(Level.SEVERE, null, ex);
-            System.out.println("An I/O error occurred. Please try again.");
+            System.out.println("An error occurred. Please try again.");
         }
     }
 
     void updateBook() throws IOException {
         book = readBooksFromFile();
-        if(book.isEmpty()){
+        if (book.isEmpty()) {
             System.out.println("No Books Available.");
             return;
         }
 
         System.out.print("Enter ISBN of the book you want to update : ");
-        String isbn = read.readLine();
+        String isbn = sc.nextLine();
         int choice;
         boolean found = false;
 
@@ -276,40 +296,50 @@ public class BookManagement {
                     System.out.println("To update Author, press 3 : ");
                     System.out.println("To update Publish Date, press 4 : ");
                     System.out.println("To exit, press 0 : ");
-                    choice = sc.nextInt();
+                    System.out.print("Enter your choice: ");
+                    try {
+                        String input = sc.nextLine();
+                        choice = Integer.parseInt(input);
+                    } catch (NumberFormatException e) {
+                        System.out.println("Invalid input. Please enter a number.");
+                        choice = -1;
+                    }
+
                     switch (choice) {
                         case 1 -> {
                             System.out.print("Enter new isbn : ");
-                            String newIsbn = read.readLine();
+                            String newIsbn = sc.nextLine();
                             boolean isUnique = book.stream().noneMatch(bk -> bk.getISBN().equals(newIsbn));
-                            if(isUnique){
+                            if (isUnique) {
                                 b.setISBN(newIsbn);
                                 System.out.println("Isbn updated succesfully.");
-                            }else{
+                            } else {
                                 System.out.println("Book with same ISBN already exists.");
                             }
                         }
                         case 2 -> {
                             System.out.print("Enter new name : ");
-                            b.setName(read.readLine());
+                            b.setName(sc.nextLine());
                             System.out.println("Name updated succesfully.");
                         }
                         case 3 -> {
                             System.out.print("Enter new Author : ");
-                            b.setAuthor(read.readLine());
+                            b.setAuthor(sc.nextLine());
                             System.out.println("Author updated succesfully.");
                         }
                         case 4 -> {
                             boolean validDate = false;
-                            while(!validDate){
+                            while (!validDate) {
                                 System.out.print("Enter new Publishing Date (yyyy-mm-dd): ");
-                                String date = read.readLine();
-                                try{
-                                    b.setPublishDate((LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"))));
+                                String date = sc.nextLine();
+                                try {
+                                    b.setPublishDate(
+                                            (LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"))));
                                     System.out.println("Publishing date updated succesfully.");
                                     validDate = true;
-                                }catch(DateTimeParseException e){
-                                    System.out.println("Invalid date format. Please enter the date in yyyy-mm-dd format.");
+                                } catch (DateTimeParseException e) {
+                                    System.out.println(
+                                            "Invalid date format. Please enter the date in yyyy-mm-dd format.");
                                 }
                             }
                         }
@@ -327,7 +357,7 @@ public class BookManagement {
 
     void deleteBook() {
         book = readBooksFromFile();
-        if(book.isEmpty()){
+        if (book.isEmpty()) {
             System.out.println("No Books Available.");
             return;
         }
@@ -335,7 +365,7 @@ public class BookManagement {
         try {
             boolean found = false;
             System.out.print("Enter ISBN of the book you want to delete : ");
-            String isbn = read.readLine();
+            String isbn = sc.nextLine();
             for (Book b : book) {
                 if (b.getISBN().equals(isbn)) {
                     book.remove(b);
@@ -348,14 +378,14 @@ public class BookManagement {
             if (!found) {
                 System.out.println("Book not found");
             }
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             Logger.getLogger(BookManagement.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     void viewAllBooks() {
         book = readBooksFromFile();
-        if(book.isEmpty()){
+        if (book.isEmpty()) {
             System.out.println("No Books Available.");
             return;
         }
@@ -368,27 +398,27 @@ public class BookManagement {
 
     void placeOrder() {
         book = readBooksFromFile();
-        if(book.isEmpty()){
+        if (book.isEmpty()) {
             System.out.println("No Books Available.");
             return;
         }
         try {
             System.out.print("Enter isbn of the book you want to borrow : ");
-            String bookToOrder = read.readLine();
+            String bookToOrder = sc.nextLine();
             boolean found = false;
             for (Book b : book) {
                 if (b.getISBN().equals(bookToOrder)) {
                     System.out.print("Enter your name : ");
-                    String orderName = read.readLine();
+                    String orderName = sc.nextLine();
                     LocalDate orderDate = null;
                     boolean validDate = false;
-                    while(!validDate){
+                    while (!validDate) {
                         System.out.print("Enter date of Order (yyyy-mm-dd) : ");
-                        String date = read.readLine();
-                        try{
+                        String date = sc.nextLine();
+                        try {
                             orderDate = ((LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"))));
                             validDate = true;
-                        }catch(DateTimeParseException e){
+                        } catch (DateTimeParseException e) {
                             System.out.println("Invalid date format. Please enter the date in yyyy-mm-dd format.");
                         }
                     }
@@ -402,14 +432,14 @@ public class BookManagement {
             if (!found) {
                 System.out.println("Book not found...");
             }
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             Logger.getLogger(BookManagement.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     void viewOrders() {
         order = readOrdersFromFile();
-        if(order.isEmpty()){
+        if (order.isEmpty()) {
             System.out.println("No Orders Placed.");
             return;
         }
@@ -428,17 +458,17 @@ public class BookManagement {
 
         try {
             System.out.print("Enter isbn of the book you want to issue: ");
-            String bookToIssue = read.readLine();
+            String bookToIssue = sc.nextLine();
             boolean found = false;
             for (Book b : book) {
                 if (b.getISBN().equals(bookToIssue)) {
                     System.out.print("Enter name of the person to whom the book is issued: ");
-                    String issuedTo = read.readLine();
+                    String issuedTo = sc.nextLine();
                     LocalDate dueDate = null;
                     boolean validDate = false;
                     while (!validDate) {
                         System.out.print("Enter due date (yyyy-mm-dd): ");
-                        String date = read.readLine();
+                        String date = sc.nextLine();
                         try {
                             dueDate = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
                             validDate = true;
@@ -450,7 +480,7 @@ public class BookManagement {
                     book.remove(b);
                     saveIssuedBooksToFile(issuedBook);
                     saveBooksToFile(book);
-                    order.removeIf(o -> o.book.getISBN().equals(bookToIssue));  // Remove order if book is issued
+                    order.removeIf(o -> o.book.getISBN().equals(bookToIssue)); // Remove order if book is issued
                     saveOrdersToFile(order);
                     System.out.println("Book issued successfully...");
                     found = true;
@@ -460,7 +490,7 @@ public class BookManagement {
             if (!found) {
                 System.out.println("Book not found...");
             }
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             Logger.getLogger(BookManagement.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -487,7 +517,7 @@ public class BookManagement {
 
         try {
             System.out.print("Enter isbn of the book you want to return : ");
-            String bookToReturn = read.readLine();
+            String bookToReturn = sc.nextLine();
             boolean found = false;
             List<IssuedBook> toRemove = new ArrayList<>();
 
@@ -498,35 +528,34 @@ public class BookManagement {
                     toRemove.add(ib);
                     boolean validDate = false;
                     LocalDate returnDate;
-                    while(!validDate){
+                    while (!validDate) {
                         System.out.print("Enter date of return (yyyy-mm-dd) : ");
-                        String date = read.readLine();
-                        try{
+                        String date = sc.nextLine();
+                        try {
                             returnDate = (LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd")));
                             if (returnDate.isAfter(ib.dueDate)) {
                                 long days = ChronoUnit.DAYS.between(ib.dueDate, returnDate);
                                 System.out.println("The book is returned " + days + " days late.");
                                 System.out.println("You owe a fine of " + (days * 100) + " rupees.");
-                            }
-                            else{
+                            } else {
                                 System.out.println("Book returned on time.");
                             }
                             validDate = true;
-                        }catch(DateTimeParseException e){
+                        } catch (DateTimeParseException e) {
                             System.out.println("Invalid date format. Please enter the date in yyyy-mm-dd format.");
                         }
                     }
                 }
             }
-            if(found){
+            if (found) {
                 issuedBook.removeAll(toRemove);
                 saveBooksToFile(book);
                 saveIssuedBooksToFile(issuedBook);
             }
 
-            if(!found)
+            if (!found)
                 System.out.println("The book does not belong to us.");
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             Logger.getLogger(BookManagement.class.getName()).log(Level.SEVERE, null, ex);
             System.out.println("An error occurred while processing the return. Please try again.");
         }

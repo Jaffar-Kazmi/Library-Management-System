@@ -43,6 +43,7 @@ public class ReaderDashboardPanel extends JPanel {
     private JTextField bookSearchField;
     private JPanel booksCardsContainer;
     private JButton[] categoryButtons;
+    private BrowseBookActionsListener browseBookActionsListener;
 
     // My Books panel components
     private JPanel myBooksPanel;
@@ -242,8 +243,7 @@ public class ReaderDashboardPanel extends JPanel {
         borrowedScrollPane.getViewport().setOpaque(false);
         borrowedScrollPane.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
-                new EmptyBorder(15, 15, 15, 15)
-        ));
+                new EmptyBorder(15, 15, 15, 15)));
         borrowedScrollPane.setBackground(Color.WHITE);
         borrowedScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         borrowedScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
@@ -274,13 +274,15 @@ public class ReaderDashboardPanel extends JPanel {
                 }
             } else if (c instanceof JPanel) {
                 JLabel found = findNumberLabelInCard((JPanel) c);
-                if (found != null) return found;
+                if (found != null)
+                    return found;
             }
         }
         return new JLabel("0");
     }
 
-    private JPanel createBorrowedBookCard(String title, String author, String borrowedDate, String dueDate, int daysLeft, double fine) {
+    private JPanel createBorrowedBookCard(String title, String author, String borrowedDate, String dueDate,
+            int daysLeft, double fine) {
         JPanel card = new JPanel();
         card.setLayout(new BorderLayout(0, 10));
         card.setBackground(Color.WHITE);
@@ -289,13 +291,10 @@ public class ReaderDashboardPanel extends JPanel {
         card.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createCompoundBorder(
                         BorderFactory.createLineBorder(new Color(230, 230, 230), 1),
-                        BorderFactory.createEmptyBorder(2, 2, 4, 4)
-                ),
+                        BorderFactory.createEmptyBorder(2, 2, 4, 4)),
                 BorderFactory.createCompoundBorder(
                         BorderFactory.createLineBorder(Theme.INDIGO, 2, true),
-                        new EmptyBorder(15, 15, 15, 15)
-                )
-        ));
+                        new EmptyBorder(15, 15, 15, 15))));
 
         Dimension cardSize = new Dimension(240, 280);
         card.setPreferredSize(cardSize);
@@ -313,7 +312,8 @@ public class ReaderDashboardPanel extends JPanel {
         iconLabel.setForeground(Theme.VIOLET);
 
         String displayTitle = title.length() > 28 ? title.substring(0, 25) + "..." : title;
-        JLabel titleLabel = new JLabel("<html><div style='text-align: center; width: 200px;'><b>" + displayTitle + "</b></div></html>");
+        JLabel titleLabel = new JLabel(
+                "<html><div style='text-align: center; width: 200px;'><b>" + displayTitle + "</b></div></html>");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
         titleLabel.setForeground(Theme.VIOLET);
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -345,10 +345,9 @@ public class ReaderDashboardPanel extends JPanel {
         dueDateLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Days left with enhanced styling
-        Color daysColor = daysLeft < 0 ? new Color(220, 53, 69) :
-                daysLeft <= 3 ? new Color(220, 53, 69) :
-                        daysLeft <= 7 ? new Color(251, 146, 60) :
-                                new Color(52, 211, 153);
+        Color daysColor = daysLeft < 0 ? new Color(220, 53, 69)
+                : daysLeft <= 3 ? new Color(220, 53, 69)
+                        : daysLeft <= 7 ? new Color(251, 146, 60) : new Color(52, 211, 153);
 
         String daysText = daysLeft < 0 ? "⚠️ " + Math.abs(daysLeft) + " days overdue" : "⏰ " + daysLeft + " days left";
         JLabel daysLeftLabel = new JLabel(daysText);
@@ -403,16 +402,14 @@ public class ReaderDashboardPanel extends JPanel {
                     ReaderDashboardPanel.this,
                     "Are you sure you want to return:\n" + title + "?",
                     "Return Book",
-                    JOptionPane.YES_NO_OPTION
-            );
+                    JOptionPane.YES_NO_OPTION);
 
             if (confirm == JOptionPane.YES_OPTION) {
                 JOptionPane.showMessageDialog(
                         ReaderDashboardPanel.this,
                         "Return request submitted for: " + title,
                         "Success",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
+                        JOptionPane.INFORMATION_MESSAGE);
                 // You can also trigger a callback to LibraryGUI here if needed
             }
         });
@@ -421,6 +418,7 @@ public class ReaderDashboardPanel extends JPanel {
             public void mouseEntered(MouseEvent e) {
                 returnBtn.setBackground(Theme.VIOLET);
             }
+
             public void mouseExited(MouseEvent e) {
                 returnBtn.setBackground(Theme.INDIGO);
             }
@@ -441,13 +439,10 @@ public class ReaderDashboardPanel extends JPanel {
                 card.setBorder(BorderFactory.createCompoundBorder(
                         BorderFactory.createCompoundBorder(
                                 BorderFactory.createLineBorder(new Color(230, 230, 230), 1),
-                                BorderFactory.createEmptyBorder(2, 2, 4, 4)
-                        ),
+                                BorderFactory.createEmptyBorder(2, 2, 4, 4)),
                         BorderFactory.createCompoundBorder(
                                 BorderFactory.createLineBorder(Theme.VIOLET, 3, true),
-                                new EmptyBorder(15, 15, 15, 15)
-                        )
-                ));
+                                new EmptyBorder(15, 15, 15, 15))));
             }
 
             @Override
@@ -455,13 +450,10 @@ public class ReaderDashboardPanel extends JPanel {
                 card.setBorder(BorderFactory.createCompoundBorder(
                         BorderFactory.createCompoundBorder(
                                 BorderFactory.createLineBorder(new Color(230, 230, 230), 1),
-                                BorderFactory.createEmptyBorder(2, 2, 4, 4)
-                        ),
+                                BorderFactory.createEmptyBorder(2, 2, 4, 4)),
                         BorderFactory.createCompoundBorder(
                                 BorderFactory.createLineBorder(Theme.INDIGO, 2, true),
-                                new EmptyBorder(15, 15, 15, 15)
-                        )
-                ));
+                                new EmptyBorder(15, 15, 15, 15))));
             }
         });
 
@@ -488,8 +480,7 @@ public class ReaderDashboardPanel extends JPanel {
         bookSearchField.setFont(Theme.SUB_HEADER_FONT);
         bookSearchField.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
-                new EmptyBorder(8, 12, 8, 12)
-        ));
+                new EmptyBorder(8, 12, 8, 12)));
 
         searchPanel.add(new JLabel("🔍"));
         searchPanel.add(bookSearchField);
@@ -501,7 +492,7 @@ public class ReaderDashboardPanel extends JPanel {
         JPanel categoryPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
         categoryPanel.setOpaque(false);
 
-        String[] categories = {"All", "Fiction", "Non-Fiction", "Science", "History", "Technology", "Romance"};
+        String[] categories = { "All", "Fiction", "Non-Fiction", "Science", "History", "Technology", "Romance" };
         categoryButtons = new JButton[categories.length];
 
         for (int i = 0; i < categories.length; i++) {
@@ -513,8 +504,7 @@ public class ReaderDashboardPanel extends JPanel {
             categoryButtons[i].setCursor(new Cursor(Cursor.HAND_CURSOR));
             categoryButtons[i].setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createLineBorder(Theme.INDIGO, 2),
-                    new EmptyBorder(5, 15, 5, 15)
-            ));
+                    new EmptyBorder(5, 15, 5, 15)));
             categoryPanel.add(categoryButtons[i]);
         }
 
@@ -543,14 +533,23 @@ public class ReaderDashboardPanel extends JPanel {
         return panel;
     }
 
-    private JPanel createBookCard(String title, String author, String category, boolean available) {
+    public void setBrowseBookActionsListener(BrowseBookActionsListener listener) {
+        this.browseBookActionsListener = listener;
+    }
+
+    public void addBrowseBookCard(String isbn, String title, String author, String category, boolean available) {
+        booksCardsContainer.add(createBookCard(isbn, title, author, category, available));
+        booksCardsContainer.revalidate();
+        booksCardsContainer.repaint();
+    }
+
+    private JPanel createBookCard(String isbn, String title, String author, String category, boolean available) {
         JPanel card = new JPanel();
         card.setLayout(new BorderLayout(8, 8));
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(Theme.CYAN, 2),
-                new EmptyBorder(12, 12, 12, 12)
-        ));
+                new EmptyBorder(12, 12, 12, 12)));
 
         Dimension cardSize = new Dimension(200, 180);
         card.setPreferredSize(cardSize);
@@ -617,6 +616,18 @@ public class ReaderDashboardPanel extends JPanel {
         borrowBtn.setEnabled(available);
         borrowBtn.setPreferredSize(new Dimension(65, 24));
 
+        viewBtn.addActionListener(e -> {
+            if (browseBookActionsListener != null) {
+                browseBookActionsListener.onView(isbn);
+            }
+        });
+
+        borrowBtn.addActionListener(e -> {
+            if (browseBookActionsListener != null) {
+                browseBookActionsListener.onBorrow(isbn);
+            }
+        });
+
         buttonPanel.add(viewBtn);
         buttonPanel.add(borrowBtn);
 
@@ -629,16 +640,14 @@ public class ReaderDashboardPanel extends JPanel {
             public void mouseEntered(MouseEvent e) {
                 card.setBorder(BorderFactory.createCompoundBorder(
                         BorderFactory.createLineBorder(Theme.VIOLET, 2),
-                        new EmptyBorder(12, 12, 12, 12)
-                ));
+                        new EmptyBorder(12, 12, 12, 12)));
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
                 card.setBorder(BorderFactory.createCompoundBorder(
                         BorderFactory.createLineBorder(Theme.CYAN, 2),
-                        new EmptyBorder(12, 12, 12, 12)
-                ));
+                        new EmptyBorder(12, 12, 12, 12)));
             }
         });
 
@@ -658,7 +667,7 @@ public class ReaderDashboardPanel extends JPanel {
         tablePanel.setOpaque(false);
         tablePanel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        String[] columns = {"Book Title", "Author", "Borrowed Date", "Due Date", "Days Left", "Fine", "Actions"};
+        String[] columns = { "Book Title", "Author", "Borrowed Date", "Due Date", "Days Left", "Fine", "Actions" };
         myBooksTableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -704,7 +713,7 @@ public class ReaderDashboardPanel extends JPanel {
         tablePanel.setOpaque(false);
         tablePanel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        String[] columns = {"Book Title", "Author", "Borrowed Date", "Return Date", "Status"};
+        String[] columns = { "Book Title", "Author", "Borrowed Date", "Return Date", "Status" };
         historyTableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -737,7 +746,7 @@ public class ReaderDashboardPanel extends JPanel {
         tablePanel.setOpaque(false);
         tablePanel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        String[] columns = {"Loan ID", "Amount", "Status", "Created Date", "Paid Date"};
+        String[] columns = { "Loan ID", "Amount", "Status", "Created Date", "Paid Date" };
         finesTableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -775,7 +784,7 @@ public class ReaderDashboardPanel extends JPanel {
         DefaultTableCellRenderer renderer = new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value,
-                                                           boolean isSelected, boolean hasFocus, int row, int column) {
+                    boolean isSelected, boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 if (!isSelected) {
                     c.setBackground(row % 2 == 0 ? Color.WHITE : Theme.AQUA);
@@ -859,10 +868,14 @@ public class ReaderDashboardPanel extends JPanel {
     }
 
     public void setDashboardStats(int borrowed, int dueSoon, int overdue, int totalRead) {
-        if (booksBorrowedLabel != null) booksBorrowedLabel.setText(String.valueOf(borrowed));
-        if (dueSoonLabel != null) dueSoonLabel.setText(String.valueOf(dueSoon));
-        if (overdueLabel != null) overdueLabel.setText(String.valueOf(overdue));
-        if (totalReadLabel != null) totalReadLabel.setText(String.valueOf(totalRead));
+        if (booksBorrowedLabel != null)
+            booksBorrowedLabel.setText(String.valueOf(borrowed));
+        if (dueSoonLabel != null)
+            dueSoonLabel.setText(String.valueOf(dueSoon));
+        if (overdueLabel != null)
+            overdueLabel.setText(String.valueOf(overdue));
+        if (totalReadLabel != null)
+            totalReadLabel.setText(String.valueOf(totalRead));
     }
 
     public void setUnpaidFines(double amount) {
@@ -881,7 +894,8 @@ public class ReaderDashboardPanel extends JPanel {
 
     public void addBorrowedCard(String title, String author, LocalDate borrowedDate, LocalDate dueDate, double fine) {
         long daysLeft = java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), dueDate);
-        JPanel card = createBorrowedBookCard(title, author, borrowedDate.toString(), dueDate.toString(), (int) daysLeft, fine);
+        JPanel card = createBorrowedBookCard(title, author, borrowedDate.toString(), dueDate.toString(), (int) daysLeft,
+                fine);
 
         if (borrowedCardsPanel != null) {
             borrowedCardsPanel.add(card);
@@ -923,12 +937,6 @@ public class ReaderDashboardPanel extends JPanel {
 
     public void clearBrowseBooks() {
         booksCardsContainer.removeAll();
-        booksCardsContainer.revalidate();
-        booksCardsContainer.repaint();
-    }
-
-    public void addBrowseBookCard(String title, String author, String category, boolean available) {
-        booksCardsContainer.add(createBookCard(title, author, category, available));
         booksCardsContainer.revalidate();
         booksCardsContainer.repaint();
     }
@@ -1011,7 +1019,15 @@ public class ReaderDashboardPanel extends JPanel {
 
     public interface MyBookActionsListener {
         void onView(String bookTitle, int row);
+
         void onRenew(String bookTitle, int row);
+
         void onReturn(String bookTitle, int row);
+    }
+
+    public interface BrowseBookActionsListener {
+        void onView(String isbn);
+
+        void onBorrow(String isbn);
     }
 }

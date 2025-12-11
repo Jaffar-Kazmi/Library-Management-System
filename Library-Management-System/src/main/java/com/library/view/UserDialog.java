@@ -23,10 +23,10 @@ public class UserDialog {
         JTextField fullNameField = createStyledTextField("");
         JTextField emailField = createStyledTextField("");
 
-        String[] roles = {"LIBRARIAN", "READER"};
+        String[] roles = { "LIBRARIAN", "READER" };
         JComboBox<String> roleCombo = createStyledComboBox(roles);
 
-        String[] statuses = {"ACTIVE", "INACTIVE"};
+        String[] statuses = { "ACTIVE", "INACTIVE" };
         JComboBox<String> statusCombo = createStyledComboBox(statuses);
 
         JPanel mainPanel = createEditAddPanel(usernameField, passwordField, fullNameField,
@@ -42,20 +42,18 @@ public class UserDialog {
                 emailField, roleCombo, statusCombo, null);
     }
 
-
     public static User showEditDialog(Component parent, User original) {
         JTextField usernameField = createStyledTextField(original.getUsername());
         JPasswordField passwordField = createStyledPasswordField(original.getPassword());
         JTextField fullNameField = createStyledTextField(original.getFullName());
         JTextField emailField = createStyledTextField(
-                original.getEmail() != null ? original.getEmail() : ""
-        );
+                original.getEmail() != null ? original.getEmail() : "");
 
-        String[] roles = {"LIBRARIAN", "READER"};
+        String[] roles = { "LIBRARIAN", "READER" };
         JComboBox<String> roleCombo = createStyledComboBox(roles);
         roleCombo.setSelectedItem(original.getRole());
 
-        String[] statuses = {"ACTIVE", "INACTIVE"};
+        String[] statuses = { "ACTIVE", "INACTIVE" };
         JComboBox<String> statusCombo = createStyledComboBox(statuses);
         statusCombo.setSelectedItem(original.getStatus() != null ? original.getStatus() : "ACTIVE");
 
@@ -74,8 +72,9 @@ public class UserDialog {
 
     /**
      * Shows a details dialog for viewing user information (read-only).
+     * 
      * @param parent parent component for positioning
-     * @param user the user to display
+     * @param user   the user to display
      */
     public static void showDetailsDialog(Component parent, User user) {
         JPanel mainPanel = new JPanel(new BorderLayout(15, 15));
@@ -151,16 +150,15 @@ public class UserDialog {
                 parent,
                 mainPanel,
                 "User Details",
-                JOptionPane.PLAIN_MESSAGE
-        );
+                JOptionPane.PLAIN_MESSAGE);
     }
 
     /**
      * Creates the main panel for edit/add dialogs with two-column layout.
      */
     private static JPanel createEditAddPanel(JTextField usernameField, JPasswordField passwordField,
-                                             JTextField fullNameField, JTextField emailField,
-                                             JComboBox<String> roleCombo, JComboBox<String> statusCombo) {
+            JTextField fullNameField, JTextField emailField,
+            JComboBox<String> roleCombo, JComboBox<String> statusCombo) {
         JPanel mainPanel = new JPanel(new BorderLayout(15, 15));
         mainPanel.setBackground(Theme.AQUA);
         mainPanel.setBorder(new EmptyBorder(25, 25, 25, 25));
@@ -229,8 +227,7 @@ public class UserDialog {
         field.setCaretColor(Theme.INDIGO);
         field.setBorder(new CompoundBorder(
                 new LineBorder(Theme.CYAN, 2),
-                new EmptyBorder(8, 10, 8, 10)
-        ));
+                new EmptyBorder(8, 10, 8, 10)));
         field.setPreferredSize(new Dimension(250, 45));
         field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
         return field;
@@ -246,8 +243,7 @@ public class UserDialog {
         field.setCaretColor(Theme.INDIGO);
         field.setBorder(new CompoundBorder(
                 new LineBorder(Theme.CYAN, 2),
-                new EmptyBorder(8, 10, 8, 10)
-        ));
+                new EmptyBorder(8, 10, 8, 10)));
         field.setPreferredSize(new Dimension(250, 45));
         field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
         return field;
@@ -263,8 +259,7 @@ public class UserDialog {
         combo.setBackground(Color.WHITE);
         combo.setBorder(new CompoundBorder(
                 new LineBorder(Theme.CYAN, 2),
-                new EmptyBorder(5, 8, 5, 8)
-        ));
+                new EmptyBorder(5, 8, 5, 8)));
         combo.setPreferredSize(new Dimension(250, 45));
         combo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
         return combo;
@@ -283,8 +278,7 @@ public class UserDialog {
         JOptionPane optionPane = new JOptionPane(
                 panel,
                 JOptionPane.PLAIN_MESSAGE,
-                JOptionPane.OK_CANCEL_OPTION
-        );
+                JOptionPane.OK_CANCEL_OPTION);
 
         JDialog dialog = optionPane.createDialog(parent, title);
         dialog.getContentPane().setBackground(Theme.AQUA);
@@ -304,7 +298,7 @@ public class UserDialog {
      * Adds a labeled field row with helper text to a section panel.
      */
     private static void addFieldRow(JPanel sectionPanel, String labelText,
-                                    JComponent field, String helperText) {
+            JComponent field, String helperText) {
         JPanel fieldsPanel = (JPanel) ((BorderLayout) sectionPanel.getLayout())
                 .getLayoutComponent(BorderLayout.CENTER);
 
@@ -342,7 +336,7 @@ public class UserDialog {
      * Adds a combo box row with helper text to a section panel.
      */
     private static void addComboRow(JPanel sectionPanel, String labelText,
-                                    JComboBox<String> combo, String helperText) {
+            JComboBox<String> combo, String helperText) {
         addFieldRow(sectionPanel, labelText, combo, helperText);
     }
 
@@ -373,8 +367,7 @@ public class UserDialog {
         valueLabel.setOpaque(true);
         valueLabel.setBorder(new CompoundBorder(
                 new LineBorder(Theme.CYAN, 2),
-                new EmptyBorder(8, 10, 8, 10)
-        ));
+                new EmptyBorder(8, 10, 8, 10)));
         valueLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         valueLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
 
@@ -412,8 +405,7 @@ public class UserDialog {
         valueLabel.setOpaque(true);
         valueLabel.setBorder(new CompoundBorder(
                 new LineBorder(valueColor, 3),
-                new EmptyBorder(10, 12, 10, 12)
-        ));
+                new EmptyBorder(10, 12, 10, 12)));
         valueLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         valueLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
 
@@ -428,13 +420,13 @@ public class UserDialog {
      * Validates all fields and creates a User object.
      */
     private static User validateAndCreateUser(Component parent,
-                                              JTextField usernameField,
-                                              JPasswordField passwordField,
-                                              JTextField fullNameField,
-                                              JTextField emailField,
-                                              JComboBox<String> roleCombo,
-                                              JComboBox<String> statusCombo,
-                                              Integer existingUserId) {
+            JTextField usernameField,
+            JPasswordField passwordField,
+            JTextField fullNameField,
+            JTextField emailField,
+            JComboBox<String> roleCombo,
+            JComboBox<String> statusCombo,
+            Integer existingUserId) {
         // Extract and trim values
         String username = usernameField.getText().trim();
         String password = new String(passwordField.getPassword());
@@ -476,9 +468,9 @@ public class UserDialog {
         // Create the user based on role
         User user;
         if ("LIBRARIAN".equals(role)) {
-            user = new Librarian(username, password, fullName);
+            user = new Librarian(username, password, fullName, email);
         } else {
-            user = new Reader(username, password, fullName);
+            user = new Reader(username, password, fullName, email);
         }
 
         if (existingUserId != null) {
@@ -504,7 +496,6 @@ public class UserDialog {
                 parent,
                 message,
                 "Validation Error",
-                JOptionPane.ERROR_MESSAGE
-        );
+                JOptionPane.ERROR_MESSAGE);
     }
 }
