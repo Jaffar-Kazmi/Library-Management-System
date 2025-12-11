@@ -40,7 +40,7 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
     private final FineService fineService = new FineService();
 
     public LibraryGUI() {
-        setTitle("Good Books");
+        setTitle("Good Book");
         setSize(1300, 800);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
