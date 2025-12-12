@@ -1,5 +1,6 @@
 package com.library.view;
 
+import com.library.model.Book;
 import com.library.model.Reader;
 
 import javax.swing.*;
@@ -11,6 +12,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.LocalDate;
+import java.util.List;
 
 public class ReaderDashboardPanel extends JPanel {
 
@@ -468,7 +470,6 @@ public class ReaderDashboardPanel extends JPanel {
         panel.setBackground(Theme.AQUA);
         panel.setBorder(new EmptyBorder(30, 30, 30, 30));
 
-        // Header with search
         JPanel headerPanel = new JPanel(new BorderLayout(20, 0));
         headerPanel.setOpaque(false);
 
@@ -492,13 +493,13 @@ public class ReaderDashboardPanel extends JPanel {
         headerPanel.add(titleLabel, BorderLayout.WEST);
         headerPanel.add(searchPanel, BorderLayout.EAST);
 
-        // Category filters
         JPanel categoryPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
         categoryPanel.setOpaque(false);
 
         String[] categories = {"All", "Fiction", "Non-Fiction", "Science", "History", "Technology", "Romance"};
         categoryButtons = new JButton[categories.length];
 
+        // ✅ CORRECT VERSION - listener added AFTER buttons are added to panel
         for (int i = 0; i < categories.length; i++) {
             categoryButtons[i] = new JButton(categories[i]);
             categoryButtons[i].setFont(Theme.NORMAL_FONT);
@@ -1022,6 +1023,39 @@ public class ReaderDashboardPanel extends JPanel {
     }
 
     private BrowseBookActionsListener browseBookActionsListener;
+
+    public void setCategoryFilterListener(CategoryFilterListener listener) {
+        if (categoryButtons != null) {
+            String[] categories = {"All", "Fiction", "Non-Fiction", "Science", "History", "Technology", "Romance"};
+
+            for (int i = 0; i < categoryButtons.length; i++) {
+                final int index = i;
+                final JButton btn = categoryButtons[i];
+                final String category = categories[i];
+
+                btn.addActionListener(e -> {
+                    // Reset all buttons
+                    for (JButton button : categoryButtons) {
+                        button.setOpaque(false);
+                        button.setForeground(Theme.VIOLET);
+                        button.setBackground(Color.WHITE);
+                    }
+
+                    // Mark selected
+                    btn.setOpaque(true);
+                    btn.setBackground(Theme.INDIGO);
+                    btn.setForeground(Theme.AQUA);
+
+                    // Call listener with category
+                    listener.onCategorySelected(category);
+                });
+            }
+        }
+    }
+
+    public interface CategoryFilterListener {
+        void onCategorySelected(String category);
+    }
 
     public interface MyBookActionsListener {
         void onView(String bookTitle, int row);

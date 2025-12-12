@@ -189,6 +189,29 @@ public class BookService {
         }
     }
 
+    public List<Book> findByCategory(String category) {
+        List<Book> books = new ArrayList<>();
+        String sql = "SELECT id, isbn, title, author, category, publisher, published_date, total_copies, available_copies, created_at " +
+                "FROM books WHERE LOWER(category) = LOWER(?)";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, category);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Book book = mapRowToBook(rs);
+                    books.add(book);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return books;
+    }
+
     public Book findById(int bookId) {
         String sql = "SELECT * FROM books WHERE id = ?";
         try (Connection conn = DatabaseConnection.getConnection();

@@ -125,6 +125,30 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
             librarianDashboard.addAddBookButtonListener(e -> handleAddBook());
             librarianDashboard.addSearchBookButtonListener(e -> handleSearchBook());
 
+            // Category filter for books
+            librarianDashboard.setCategoryFilterListener(category -> {
+                List<Book> filteredBooks;
+                if (category.equals("All")) {
+                    filteredBooks = bookService.findAll();
+                } else {
+                    filteredBooks = bookService.findByCategory(category);
+                }
+
+                // Update table
+                Object[][] rows = new Object[filteredBooks.size()][6];
+                for (int i = 0; i < filteredBooks.size(); i++) {
+                    Book b = filteredBooks.get(i);
+                    String status = b.getAvailableCopies() > 0 ? "Available" : "Issued";
+                    rows[i][0] = b.getIsbn();
+                    rows[i][1] = b.getTitle();
+                    rows[i][2] = b.getAuthor();
+                    rows[i][3] = b.getCategory();
+                    rows[i][4] = status;
+                    rows[i][5] = "Actions";
+                }
+                librarianDashboard.setBooksData(rows);
+            });
+
             librarianDashboard.setBookActionsListener(
                     new LibrarianDashboardPanel.BookActionsListener() {
                         @Override
@@ -1001,6 +1025,26 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
             // Search in Browse Books
             readerDashboard.addBookSearchListener(e -> handleReaderBookSearch());
 
+            readerDashboard.setCategoryFilterListener(category -> {
+                List<Book> filteredBooks;
+                if (category.equals("All")) {
+                    filteredBooks = bookService.findAll();
+                } else {
+                    filteredBooks = bookService.findByCategory(category);
+                }
+
+                readerDashboard.clearBrowseBooks();
+                for (Book book : filteredBooks) {
+                    boolean available = book.getAvailableCopies() > 0;
+                    readerDashboard.addBrowseBookCard(
+                            book.getTitle(),
+                            book.getAuthor(),
+                            book.getCategory() != null ? book.getCategory() : "General",
+                            available
+                    );
+                }
+            });
+
             // Actions in "My Books" table
             readerDashboard.setMyBookActionsListener(new ReaderDashboardPanel.MyBookActionsListener() {
                 @Override
@@ -1028,7 +1072,6 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                     handleReaderReturn(reader, bookTitle, row);
                 }
 
-                // ✅ THIS IS CORRECT - Creates a request for librarian
                 @Override
                 public void onRequestReturn(String bookTitle, int row, int loanId) {
                     Book book = bookService.findByTitle(bookTitle);

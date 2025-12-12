@@ -39,6 +39,7 @@ public class LibrarianDashboardPanel extends JPanel {
     private JPanel booksPanel;
     private JTextField bookSearchField;
     private JButton addBookBtn;
+    private JButton[] categoryButtons;
     private JTable booksTable;
     private DefaultTableModel booksTableModel;
     private BookActionsListener bookActionsListener;
@@ -248,11 +249,10 @@ public class LibrarianDashboardPanel extends JPanel {
                 if (found != null) return found;
             }
         }
-        return new JLabel("0"); // fallback
+        return new JLabel("0");
     }
 
     private JLabel extractLabelFromCard(JPanel card, int labelIndex) {
-        // Helper to find label in the stat card
         Component[] components = card.getComponents();
         int labelCount = 0;
         for (Component c : components) {
@@ -271,7 +271,7 @@ public class LibrarianDashboardPanel extends JPanel {
         panel.setBackground(Theme.AQUA);
         panel.setBorder(new EmptyBorder(30, 30, 30, 30));
 
-        // Header with search
+        // ===== Header with search =====
         JPanel headerPanel = new JPanel(new BorderLayout(20, 0));
         headerPanel.setOpaque(false);
 
@@ -298,7 +298,31 @@ public class LibrarianDashboardPanel extends JPanel {
         headerPanel.add(titleLabel, BorderLayout.WEST);
         headerPanel.add(searchPanel, BorderLayout.EAST);
 
-        // Books table
+        // ===== Category filter panel ← CREATE THIS =====
+        JPanel categoryPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        categoryPanel.setOpaque(false);
+        categoryPanel.setBorder(new EmptyBorder(10, 0, 20, 0));
+
+        String[] categories = {"All", "Fiction", "Non-Fiction", "Science", "History", "Technology", "Romance"};
+        categoryButtons = new JButton[categories.length];
+
+        for (int i = 0; i < categories.length; i++) {
+            categoryButtons[i] = new JButton(categories[i]);
+
+            categoryButtons[i].setFont(Theme.NORMAL_FONT);
+            categoryButtons[i].setBackground(i == 0 ? Theme.INDIGO : Color.WHITE);
+            categoryButtons[i].setForeground(i == 0 ? Theme.AQUA : Theme.VIOLET);
+            categoryButtons[i].setFocusPainted(false);
+            categoryButtons[i].setCursor(new Cursor(Cursor.HAND_CURSOR));
+            categoryButtons[i].setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(Theme.INDIGO, 2),
+                    new EmptyBorder(5, 15, 5, 15)
+            ));
+
+            categoryPanel.add(categoryButtons[i]);
+        }
+
+        // ===== Books table =====
         JPanel tablePanel = new JPanel(new BorderLayout());
         tablePanel.setOpaque(false);
         tablePanel.setBorder(new EmptyBorder(20, 20, 20, 20));
@@ -331,8 +355,14 @@ public class LibrarianDashboardPanel extends JPanel {
 
         tablePanel.add(scrollPane, BorderLayout.CENTER);
 
+        // ===== Assemble with content panel =====
+        JPanel contentPanel = new JPanel(new BorderLayout(0, 15));
+        contentPanel.setOpaque(false);
+        contentPanel.add(categoryPanel, BorderLayout.NORTH);   // ← Add category panel here
+        contentPanel.add(tablePanel, BorderLayout.CENTER);
+
         panel.add(headerPanel, BorderLayout.NORTH);
-        panel.add(tablePanel, BorderLayout.CENTER);
+        panel.add(contentPanel, BorderLayout.CENTER);
 
         return panel;
     }
@@ -520,6 +550,35 @@ public class LibrarianDashboardPanel extends JPanel {
         });
 
         popup.show(table, x, y);
+    }
+
+    public void setCategoryFilterListener(CategoryFilterListener listener) {
+        if (categoryButtons != null) {
+            String[] categories = {"All", "Fiction", "Non-Fiction", "Science", "History", "Technology", "Romance"};
+
+            for (int i = 0; i < categoryButtons.length; i++) {
+                final int index = i;
+                final JButton btn = categoryButtons[i];
+                final String category = categories[i];
+
+                btn.addActionListener(e -> {
+                    // Reset all buttons
+                    for (JButton button : categoryButtons) {
+                        button.setOpaque(false);
+                        button.setForeground(Theme.VIOLET);
+                        button.setBackground(Color.WHITE);
+                    }
+
+                    // Mark selected
+                    btn.setOpaque(true);
+                    btn.setBackground(Theme.INDIGO);
+                    btn.setForeground(Theme.AQUA);
+
+                    // Call listener
+                    listener.onCategorySelected(category);
+                });
+            }
+        }
     }
 
     private void setupLayout() {
@@ -728,6 +787,9 @@ public class LibrarianDashboardPanel extends JPanel {
     }
 
     private RequestActionsListener requestActionsListener;
+    public void setRequestActionsListener(RequestActionsListener listener) {
+        this.requestActionsListener = listener;
+    }
 
     public interface RequestActionsListener {
         void onApprove(String requestId, int row);
@@ -735,7 +797,7 @@ public class LibrarianDashboardPanel extends JPanel {
         void onHold(String requestId, int row);
     }
 
-    public void setRequestActionsListener(RequestActionsListener listener) {
-        this.requestActionsListener = listener;
+    public interface CategoryFilterListener {
+        void onCategorySelected(String category);
     }
 }
