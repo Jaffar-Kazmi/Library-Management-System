@@ -280,7 +280,7 @@ public class ReaderDashboardPanel extends JPanel {
         return new JLabel("0");
     }
 
-    private JPanel createBorrowedBookCard(String title, String author, String borrowedDate, String dueDate, int daysLeft, double fine) {
+    private JPanel createBorrowedBookCard(String title, String author, String borrowedDate, String dueDate, int daysLeft, double fine, int loanId) {
         JPanel card = new JPanel();
         card.setLayout(new BorderLayout(0, 10));
         card.setBackground(Color.WHITE);
@@ -401,19 +401,14 @@ public class ReaderDashboardPanel extends JPanel {
         returnBtn.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(
                     ReaderDashboardPanel.this,
-                    "Are you sure you want to return:\n" + title + "?",
+                    "Are you sure you want to return this book?\n" + title,
                     "Return Book",
                     JOptionPane.YES_NO_OPTION
             );
-
             if (confirm == JOptionPane.YES_OPTION) {
-                JOptionPane.showMessageDialog(
-                        ReaderDashboardPanel.this,
-                        "Return request submitted for: " + title,
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
-                // You can also trigger a callback to LibraryGUI here if needed
+                if (myBookActionsListener != null) {
+                    myBookActionsListener.onRequestReturn(title, 0, loanId);
+                }
             }
         });
 
@@ -891,16 +886,16 @@ public class ReaderDashboardPanel extends JPanel {
         }
     }
 
-    public void addBorrowedCard(String title, String author, LocalDate borrowedDate, LocalDate dueDate, double fine) {
+    public void addBorrowedCard(String title, String author, LocalDate borrowedDate, LocalDate dueDate, double fine, int loanId) {
         long daysLeft = java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), dueDate);
-        JPanel card = createBorrowedBookCard(title, author, borrowedDate.toString(), dueDate.toString(), (int) daysLeft, fine);
-
+        JPanel card = createBorrowedBookCard(title, author, borrowedDate.toString(), dueDate.toString(), (int)daysLeft, fine, loanId);
         if (borrowedCardsPanel != null) {
             borrowedCardsPanel.add(card);
             borrowedCardsPanel.revalidate();
             borrowedCardsPanel.repaint();
         }
     }
+
 
     public void setMyBooksData(Object[][] rows) {
         myBooksTableModel.setRowCount(0);
@@ -1032,7 +1027,7 @@ public class ReaderDashboardPanel extends JPanel {
         void onView(String bookTitle, int row);
         void onRenew(String bookTitle, int row);
         void onReturn(String bookTitle, int row);
-        void onRequestReturn(String bookTitle, int loanId, int row);
+        void onRequestReturn(String bookTitle, int row, int loanId);
     }
 
     public interface BrowseBookActionsListener {

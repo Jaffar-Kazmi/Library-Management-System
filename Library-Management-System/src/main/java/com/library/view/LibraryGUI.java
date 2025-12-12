@@ -351,6 +351,12 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                     return;
                 }
 
+                // ✅ CHECK IF IT'S A RETURN REQUEST
+                if ("RETURN".equals(request.getRequestType())) {
+                    handleApproveReturnRequest(request, row, librarianId);
+                    return;
+                }
+
                 // ✅ Show loan approval dialog (ask for duration and due date)
                 LoanApprovalDialog.LoanApprovalResult loanResult = LoanApprovalDialog.showDialog(
                         (JFrame) SwingUtilities.getWindowAncestor(librarianDashboard)
@@ -503,6 +509,167 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                 }
             }
         });
+    }
+
+    private void handleApproveReturnRequest(BookRequest returnRequest, int row, int librarianId) {
+        Loan activeLoan = loanService.findActiveLoanByBookId(returnRequest.getBookId());
+
+        if (activeLoan == null) {
+            JOptionPane.showMessageDialog(
+                    librarianDashboard,
+                    "No active loan found for this book",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        // ✅ FIX: Load the book directly instead of relying on BookRequest.getBook()
+        Book book = bookService.findById(returnRequest.getBookId());
+        if (book == null) {
+            JOptionPane.showMessageDialog(
+                    librarianDashboard,
+                    "Book not found",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        double overdueFine = fineService.calculateFineForLoan(activeLoan);
+
+        System.out.println("DEBUG: Return request ID=" + returnRequest.getId() +
+                ", Book=" + book.getTitle() +  // ✅ NOW SAFE!
+                ", LoanID=" + activeLoan.getLoanId() +
+                ", OverdueFine=" + overdueFine);
+
+        if (overdueFine > 0) {
+            // ❌ SCENARIO 2: FINE EXISTS → PUT ON HOLD
+            String message = String.format(
+                    "📋 RETURN REQUEST WITH FINE\n\n" +
+                            "Book: %s\n" +
+                            "Overdue Fine: Rs %.2f\n\n" +
+                            "Action: Put on HOLD until fine is paid\n" +
+                            "Enter payment date (yyyy-MM-dd):",
+                    book.getTitle(),  // ✅ NOW SAFE!
+                    overdueFine
+            );
+
+            String paymentDateStr = JOptionPane.showInputDialog(librarianDashboard, message);
+
+            if (paymentDateStr == null || paymentDateStr.isEmpty()) {
+                return;
+            }
+
+            try {
+                LocalDate paymentDate = LocalDate.parse(paymentDateStr);
+
+                // Create fine record
+                Fine fine = new Fine();
+                fine.setLoanId(activeLoan.getLoanId());
+                fine.setReaderId(returnRequest.getReaderId());
+                fine.setAmount(overdueFine);
+                fine.setStatus("UNPAID");
+                boolean fineCreated = fineService.addFine(fine);
+
+                if (!fineCreated) {
+                    JOptionPane.showMessageDialog(
+                            librarianDashboard,
+                            "Failed to create fine record",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                    return;
+                }
+
+                // Put request on HOLD
+                boolean held = bookRequestService.holdRequest(
+                        returnRequest.getId(),
+                        librarianId,
+                        paymentDate
+                );
+
+                if (held) {
+                    JOptionPane.showMessageDialog(
+                            librarianDashboard,
+                            "⏸ RETURN REQUEST ON HOLD\n\n" +
+                                    "Fine: Rs " + String.format("%.2f", overdueFine) + "\n" +
+                                    "Hold until: " + paymentDate + "\n\n" +
+                                    "Notify reader about fine payment",
+                            "Success",
+                            JOptionPane.INFORMATION_MESSAGE
+                    );
+                    librarianDashboard.getRequestsTableModel().removeRow(row);
+                    loadPendingRequests();
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(
+                        librarianDashboard,
+                        "Invalid date format. Use yyyy-MM-dd",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+            }
+        } else {
+            // ✅ SCENARIO 1: NO FINE → APPROVE IMMEDIATELY
+            boolean approved = bookRequestService.approveRequest(returnRequest.getId(), librarianId);
+
+            if (!approved) {
+                JOptionPane.showMessageDialog(
+                        librarianDashboard,
+                        "Failed to approve return request",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            // Mark loan as returned
+            boolean returned = loanService.returnBook(activeLoan.getLoanId());
+
+            if (!returned) {
+                JOptionPane.showMessageDialog(
+                        librarianDashboard,
+                        "Approved request but failed to mark loan as returned",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            // Increment available copies
+            boolean copiesUpdated = bookService.incrementAvailableCopies(returnRequest.getBookId());
+
+            if (!copiesUpdated) {
+                JOptionPane.showMessageDialog(
+                        librarianDashboard,
+                        "Approved request but failed to update book inventory",
+                        "Warning",
+                        JOptionPane.WARNING_MESSAGE
+                );
+            }
+
+            JOptionPane.showMessageDialog(
+                    librarianDashboard,
+                    "✅ RETURN APPROVED\n\n" +
+                            "Book: " + book.getTitle() + "\n" +  // ✅ NOW SAFE!
+                            "No overdue fine\n" +
+                            "Book copies updated",
+                    "Success",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+            librarianDashboard.getRequestsTableModel().removeRow(row);
+
+            // Refresh dashboards
+            loadDashboardStats();
+            loadPendingRequests();
+            loadBooksIntoLibrarianDashboard();
+
+            if (readerDashboard != null && currentUser instanceof Reader) {
+                loadReaderDashboardData((Reader) currentUser);
+                loadReaderMyBooks((Reader) currentUser);
+            }
+        }
     }
 
     private void loadBooksIntoLibrarianDashboard() {
@@ -841,7 +1008,7 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                     Book book = bookService.findByTitle(bookTitle);
                     if (book == null) {
                         JOptionPane.showMessageDialog(
-                                librarianDashboard,
+                                readerDashboard,
                                 "Book not found",
                                 "Error",
                                 JOptionPane.ERROR_MESSAGE
@@ -860,52 +1027,84 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                 public void onReturn(String bookTitle, int row) {
                     handleReaderReturn(reader, bookTitle, row);
                 }
-            });
 
-            // Actions in "Browse Books" cards
-            readerDashboard.setBrowseBookActionsListener(new ReaderDashboardPanel.BrowseBookActionsListener() {
+                // ✅ THIS IS CORRECT - Creates a request for librarian
                 @Override
-                public void onView(String bookTitle) {
-                    JOptionPane.showMessageDialog(
-                            readerDashboard,
-                            "Viewing details for " + bookTitle,
-                            "Book Details",
-                            JOptionPane.INFORMATION_MESSAGE
+                public void onRequestReturn(String bookTitle, int row, int loanId) {
+                    Book book = bookService.findByTitle(bookTitle);
+                    if (book == null) return;
+
+                    boolean ok = bookRequestService.createRequest(
+                            book.getBookId(),
+                            reader.getId(),
+                            "RETURN"
                     );
-                }
 
-                @Override
-                public void onBorrow(String bookTitle) {
-                    handleBorrowRequest(reader, bookTitle);
+                    if (ok) {
+                        JOptionPane.showMessageDialog(
+                                readerDashboard,
+                                "Return request submitted to librarian.",
+                                "Success",
+                                JOptionPane.INFORMATION_MESSAGE
+                        );
+                        loadReaderMyBooks(reader);
+                    }
                 }
             });
+
+            // Borrow Books listener
+            readerDashboard.setBrowseBookActionsListener(
+                    new ReaderDashboardPanel.BrowseBookActionsListener() {
+                        @Override
+                        public void onView(String bookTitle) {
+                            Book book = bookService.findByTitle(bookTitle);
+                            if (book == null) {
+                                JOptionPane.showMessageDialog(
+                                        readerDashboard,
+                                        "Book not found",
+                                        "Error",
+                                        JOptionPane.ERROR_MESSAGE
+                                );
+                                return;
+                            }
+                            BookDialog.showDetailsDialog(readerDashboard, book);
+                        }
+
+                        @Override
+                        public void onBorrow(String bookTitle) {
+                            handleBorrowRequest(reader, bookTitle);
+                        }
+                    }
+            );
 
             mainPanel.add(readerDashboard, DASHBOARD_READER_PANEL);
-        }
 
-        // Initial load for ALL tabs
-        loadReaderDashboardData(reader);
-        loadBooksIntoReaderBrowse();
-        loadReaderMyBooks(reader);
-        loadReaderHistory(reader);
-        loadReaderFines(reader);
+            // Load initial data
+            loadBooksIntoReaderBrowse();
+            loadReaderDashboardData(reader);
+            loadReaderMyBooks(reader);
+            loadReaderHistory(reader);
+            loadReaderFines(reader);
+        }
 
         cardLayout.show(mainPanel, DASHBOARD_READER_PANEL);
     }
 
     private void loadReaderDashboardData(Reader reader) {
-        int borrowed = loanService.countActiveLoansByReaderId(reader.getId());
-        int dueSoon = loanService.countDueSoonByReaderId(reader.getId(), 7);
-        int overdue = loanService.countOverdueByReaderId(reader.getId());
-        int totalRead = loanService.countTotalReadByReaderId(reader.getId());
+        int activeLoanCount = loanService.countActiveLoansByReaderId(reader.getId());
+        int dueSoonCount = loanService.countDueSoonByReaderId(reader.getId(), 3);
+        int overdueCount = loanService.countOverdueByReaderId(reader.getId());
+        int totalBooksRead = loanService.countTotalReadByReaderId(reader.getId());
+        double totalUnpaidFines = fineService.getTotalUnpaidFinesByReaderId(reader.getId());
 
-        readerDashboard.setDashboardStats(borrowed, dueSoon, overdue, totalRead);
+        // ✅ Set dashboard stats (4 args + separate fines call)
+        readerDashboard.setDashboardStats(activeLoanCount, dueSoonCount, overdueCount, totalBooksRead);
+        readerDashboard.setUnpaidFines(totalUnpaidFines);
 
-        double unpaidFines = fineService.getTotalUnpaidFinesByReaderId(reader.getId());
-        readerDashboard.setUnpaidFines(unpaidFines);
-
+        // ✅ FIX: Use card-based API instead of rows array
         readerDashboard.clearBorrowedCards();
         List<Loan> activeLoans = loanService.findActiveLoansByReaderId(reader.getId());
+
         for (Loan loan : activeLoans) {
             double fine = fineService.calculateFineForLoan(loan);
             readerDashboard.addBorrowedCard(
@@ -913,7 +1112,8 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
                     loan.getBookAuthor(),
                     loan.getBorrowedDate(),
                     loan.getDueDate(),
-                    fine
+                    fine,
+                    loan.getLoanId()
             );
         }
     }
@@ -975,7 +1175,7 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
 
         for (int i = 0; i < fines.size(); i++) {
             Fine fine = fines.get(i);
-            rows[i][0] = fine.getLoanId();
+            rows[i][0] = fine.getFineId();
             rows[i][1] = "Rs " + String.format("%.2f", fine.getAmount());
             rows[i][2] = fine.getStatus();
             rows[i][3] = fine.getCreatedDate().toString();
@@ -1074,13 +1274,13 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
     private void handleReaderReturn(Reader reader, String bookTitle, int row) {
         int confirm = JOptionPane.showConfirmDialog(
                 readerDashboard,
-                "Are you sure you want to return this book?\n" + bookTitle,
+                "Are you sure you want to submit a return request for this book?\n" + bookTitle,
                 "Return Book",
                 JOptionPane.YES_NO_OPTION
         );
         if (confirm != JOptionPane.YES_OPTION) return;
 
-        // Find and return the loan
+        // Find the active loan
         Loan targetLoan = null;
         List<Loan> loans = loanService.findActiveLoansByReaderId(reader.getId());
         for (Loan loan : loans) {
@@ -1100,39 +1300,34 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
             return;
         }
 
-        boolean returned = loanService.returnBook(targetLoan.getLoanId());
-        if (!returned) {
+        // ✅ FIX: Create a RETURN request for the librarian to approve
+        Book book = bookService.findByTitle(bookTitle);
+        if (book == null) return;
+
+        boolean ok = bookRequestService.createRequest(
+                book.getBookId(),
+                reader.getId(),
+                "RETURN"  // ✅ This creates the request in librarian's dashboard!
+        );
+
+        if (ok) {
             JOptionPane.showMessageDialog(
                     readerDashboard,
-                    "Failed to return book.",
+                    "✅ Return request submitted to librarian.\n\n" +
+                            "The librarian will review and approve your return.\n" +
+                            "Any overdue fines will be calculated then.",
+                    "Success",
+                    JOptionPane.INFORMATION_MESSAGE
+            );
+            loadReaderMyBooks(reader);
+        } else {
+            JOptionPane.showMessageDialog(
+                    readerDashboard,
+                    "Failed to submit return request.",
                     "Error",
                     JOptionPane.ERROR_MESSAGE
             );
-            return;
         }
-
-        bookService.incrementAvailableCopies(targetLoan.getBookId());
-        double fine = fineService.calculateFineForLoan(targetLoan);
-        if (fine > 0) {
-            Fine fineRecord = new Fine(targetLoan.getLoanId(), reader.getId(), fine);
-            fineService.addFine(fineRecord);
-        }
-
-        loadReaderMyBooks(reader);
-        loadReaderHistory(reader);
-        loadReaderFines(reader);
-
-        String msg = "Book returned successfully!";
-        if (fine > 0) {
-            msg += "\nFine of Rs " + String.format("%.2f", fine) + " has been recorded.";
-        }
-
-        JOptionPane.showMessageDialog(
-                readerDashboard,
-                msg,
-                "Success",
-                JOptionPane.INFORMATION_MESSAGE
-        );
     }
 
     private void handleReaderBookSearch() {
