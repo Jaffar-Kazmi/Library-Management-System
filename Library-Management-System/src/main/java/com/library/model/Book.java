@@ -13,6 +13,11 @@ public class Book {
     private int totalCopies;
     private int availableCopies;
 
+    public Book() {
+        this.totalCopies = 1;
+        this.availableCopies = 1;
+    }
+
     public Book(String isbn, String title, String author, String publisher) {
         this.isbn = isbn;
         this.title = title;

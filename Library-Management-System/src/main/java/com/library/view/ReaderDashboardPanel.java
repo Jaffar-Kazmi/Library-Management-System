@@ -1,5 +1,6 @@
 package com.library.view;
 
+import com.library.model.Book;
 import com.library.model.Reader;
 
 import javax.swing.*;
@@ -11,6 +12,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.LocalDate;
+import java.util.List;
 
 public class ReaderDashboardPanel extends JPanel {
 
@@ -280,7 +282,7 @@ public class ReaderDashboardPanel extends JPanel {
         return new JLabel("0");
     }
 
-    private JPanel createBorrowedBookCard(String title, String author, String borrowedDate, String dueDate, int daysLeft, double fine) {
+    private JPanel createBorrowedBookCard(String title, String author, String borrowedDate, String dueDate, int daysLeft, double fine, int loanId) {
         JPanel card = new JPanel();
         card.setLayout(new BorderLayout(0, 10));
         card.setBackground(Color.WHITE);
@@ -401,19 +403,14 @@ public class ReaderDashboardPanel extends JPanel {
         returnBtn.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(
                     ReaderDashboardPanel.this,
-                    "Are you sure you want to return:\n" + title + "?",
+                    "Are you sure you want to return this book?\n" + title,
                     "Return Book",
                     JOptionPane.YES_NO_OPTION
             );
-
             if (confirm == JOptionPane.YES_OPTION) {
-                JOptionPane.showMessageDialog(
-                        ReaderDashboardPanel.this,
-                        "Return request submitted for: " + title,
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
-                // You can also trigger a callback to LibraryGUI here if needed
+                if (myBookActionsListener != null) {
+                    myBookActionsListener.onRequestReturn(title, 0, loanId);
+                }
             }
         });
 
@@ -473,7 +470,6 @@ public class ReaderDashboardPanel extends JPanel {
         panel.setBackground(Theme.AQUA);
         panel.setBorder(new EmptyBorder(30, 30, 30, 30));
 
-        // Header with search
         JPanel headerPanel = new JPanel(new BorderLayout(20, 0));
         headerPanel.setOpaque(false);
 
@@ -497,13 +493,13 @@ public class ReaderDashboardPanel extends JPanel {
         headerPanel.add(titleLabel, BorderLayout.WEST);
         headerPanel.add(searchPanel, BorderLayout.EAST);
 
-        // Category filters
         JPanel categoryPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
         categoryPanel.setOpaque(false);
 
         String[] categories = {"All", "Fiction", "Non-Fiction", "Science", "History", "Technology", "Romance"};
         categoryButtons = new JButton[categories.length];
 
+        // ✅ CORRECT VERSION - listener added AFTER buttons are added to panel
         for (int i = 0; i < categories.length; i++) {
             categoryButtons[i] = new JButton(categories[i]);
             categoryButtons[i].setFont(Theme.NORMAL_FONT);
@@ -639,6 +635,18 @@ public class ReaderDashboardPanel extends JPanel {
                         BorderFactory.createLineBorder(Theme.CYAN, 2),
                         new EmptyBorder(12, 12, 12, 12)
                 ));
+            }
+        });
+
+        viewBtn.addActionListener(e -> {
+            if (browseBookActionsListener != null) {
+                browseBookActionsListener.onView(title);
+            }
+        });
+
+        borrowBtn.addActionListener(e -> {
+            if (available && browseBookActionsListener != null) {
+                browseBookActionsListener.onBorrow(title);
             }
         });
 
@@ -879,16 +887,16 @@ public class ReaderDashboardPanel extends JPanel {
         }
     }
 
-    public void addBorrowedCard(String title, String author, LocalDate borrowedDate, LocalDate dueDate, double fine) {
+    public void addBorrowedCard(String title, String author, LocalDate borrowedDate, LocalDate dueDate, double fine, int loanId) {
         long daysLeft = java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), dueDate);
-        JPanel card = createBorrowedBookCard(title, author, borrowedDate.toString(), dueDate.toString(), (int) daysLeft, fine);
-
+        JPanel card = createBorrowedBookCard(title, author, borrowedDate.toString(), dueDate.toString(), (int)daysLeft, fine, loanId);
         if (borrowedCardsPanel != null) {
             borrowedCardsPanel.add(card);
             borrowedCardsPanel.revalidate();
             borrowedCardsPanel.repaint();
         }
     }
+
 
     public void setMyBooksData(Object[][] rows) {
         myBooksTableModel.setRowCount(0);
@@ -1009,9 +1017,55 @@ public class ReaderDashboardPanel extends JPanel {
         return bookSearchField.getText();
     }
 
+
+    public void setBrowseBookActionsListener(BrowseBookActionsListener listener) {
+        this.browseBookActionsListener = listener;
+    }
+
+    private BrowseBookActionsListener browseBookActionsListener;
+
+    public void setCategoryFilterListener(CategoryFilterListener listener) {
+        if (categoryButtons != null) {
+            String[] categories = {"All", "Fiction", "Non-Fiction", "Science", "History", "Technology", "Romance"};
+
+            for (int i = 0; i < categoryButtons.length; i++) {
+                final int index = i;
+                final JButton btn = categoryButtons[i];
+                final String category = categories[i];
+
+                btn.addActionListener(e -> {
+                    // Reset all buttons
+                    for (JButton button : categoryButtons) {
+                        button.setOpaque(false);
+                        button.setForeground(Theme.VIOLET);
+                        button.setBackground(Color.WHITE);
+                    }
+
+                    // Mark selected
+                    btn.setOpaque(true);
+                    btn.setBackground(Theme.INDIGO);
+                    btn.setForeground(Theme.AQUA);
+
+                    // Call listener with category
+                    listener.onCategorySelected(category);
+                });
+            }
+        }
+    }
+
+    public interface CategoryFilterListener {
+        void onCategorySelected(String category);
+    }
+
     public interface MyBookActionsListener {
         void onView(String bookTitle, int row);
         void onRenew(String bookTitle, int row);
         void onReturn(String bookTitle, int row);
+        void onRequestReturn(String bookTitle, int row, int loanId);
+    }
+
+    public interface BrowseBookActionsListener {
+        void onView(String bookTitle);
+        void onBorrow(String bookTitle);
     }
 }

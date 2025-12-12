@@ -5,6 +5,10 @@ public class Reader extends User {
         super(username, password, fullName);
     }
 
+    public Reader() {
+        super();
+    }
+
     @Override
     public String getUserType() {
         return "Reader";

@@ -102,6 +102,21 @@ public class BookService {
         return books;
     }
 
+    public Book findByTitle(String title) {
+        String sql = "SELECT * FROM books WHERE title = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, title);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return mapRowToBook(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public boolean add(Book book) {
         String sql = "INSERT INTO books " +
                 "(isbn, title, author, publisher, published_date, category, total_copies, available_copies) " +
@@ -172,6 +187,44 @@ public class BookService {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public List<Book> findByCategory(String category) {
+        List<Book> books = new ArrayList<>();
+        String sql = "SELECT id, isbn, title, author, category, publisher, published_date, total_copies, available_copies, created_at " +
+                "FROM books WHERE LOWER(category) = LOWER(?)";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, category);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Book book = mapRowToBook(rs);
+                    books.add(book);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return books;
+    }
+
+    public Book findById(int bookId) {
+        String sql = "SELECT * FROM books WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, bookId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return mapRowToBook(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public boolean deleteById(int id) {

@@ -26,9 +26,10 @@ public class LibrarianDashboardPanel extends JPanel {
     private JButton usersBtn;
     private JButton logoutBtn;
 
+
     // Dashboard components
     private JPanel dashboardPanel;
-    private DefaultTableModel activityTableModel;
+    private DefaultTableModel requestsTableModel;
     private JLabel totalBooksLabel;
     private JLabel issuedBooksLabel;
     private JLabel totalUsersLabel;
@@ -38,6 +39,7 @@ public class LibrarianDashboardPanel extends JPanel {
     private JPanel booksPanel;
     private JTextField bookSearchField;
     private JButton addBookBtn;
+    private JButton[] categoryButtons;
     private JTable booksTable;
     private DefaultTableModel booksTableModel;
     private BookActionsListener bookActionsListener;
@@ -143,7 +145,7 @@ public class LibrarianDashboardPanel extends JPanel {
         panel.setBackground(Theme.AQUA);
         panel.setBorder(new EmptyBorder(30, 30, 30, 30));
 
-        // Header
+        // ===== Header =====
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
 
@@ -161,14 +163,12 @@ public class LibrarianDashboardPanel extends JPanel {
         headerText.add(titleLabel);
         headerText.add(welcomeLabel);
 
-        headerPanel.add(headerText);
+        headerPanel.add(headerText, BorderLayout.WEST);
 
-        // Statistics cards
-        // Statistics cards
+        // ===== Stats cards =====
         JPanel statsPanel = new JPanel(new GridLayout(1, 4, 20, 0));
         statsPanel.setOpaque(false);
 
-// Create stat cards and extract number labels
         JPanel totalBooksCard = UIComponents.createStatCard("Total Books", "0", "📚", new Color(106, 17, 203));
         totalBooksLabel = findNumberLabelInCard(totalBooksCard);
 
@@ -186,36 +186,49 @@ public class LibrarianDashboardPanel extends JPanel {
         statsPanel.add(totalUsersCard);
         statsPanel.add(availableBooksCard);
 
-        // Recent activity
-        JPanel activityPanel = new JPanel(new BorderLayout(10, 10));
-        activityPanel.setBackground(Theme.AQUA);
-        activityPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        // ===== Requests table (replacing Recent Activity) =====
+        JPanel requestsPanel = new JPanel(new BorderLayout(10, 10));
+        requestsPanel.setBackground(Theme.AQUA);
+        requestsPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        JLabel activityTitle = new JLabel("Recent Activity");
-        activityTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        activityTitle.setForeground(Theme.VIOLET);
+        JLabel requestsTitle = new JLabel("📋 Book Requests Queue");
+        requestsTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        requestsTitle.setForeground(Theme.VIOLET);
 
-        String[] columns = {"Time", "Activity", "User", "Status"};
-
-        activityTableModel = new DefaultTableModel(columns, 0) {
+        String[] columns = {"ID", "Reader", "Book Title", "Type", "Requested", "Actions"};
+        requestsTableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
         };
 
-        JTable activityTable = createStyledTable(activityTableModel);
-        JScrollPane activityScroll = new JScrollPane(activityTable);
-        activityScroll.setBorder(null);
+        JTable requestsTable = createStyledTable(requestsTableModel);
 
-        activityPanel.add(activityTitle, BorderLayout.NORTH);
-        activityPanel.add(activityScroll, BorderLayout.CENTER);
+        // Actions column popup
+        requestsTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int row = requestsTable.rowAtPoint(e.getPoint());
+                int col = requestsTable.columnAtPoint(e.getPoint());
 
-        // Layout
+                if (row >= 0 && col == requestsTable.getColumnCount() - 1) {
+                    showRequestActionsMenu(requestsTable, row, e.getX(), e.getY());
+                }
+            }
+        });
+
+        JScrollPane requestsScroll = new JScrollPane(requestsTable);
+        requestsScroll.setBorder(null);
+
+        requestsPanel.add(requestsTitle, BorderLayout.NORTH);
+        requestsPanel.add(requestsScroll, BorderLayout.CENTER);
+
+        // ===== Layout content =====
         JPanel contentPanel = new JPanel(new BorderLayout(20, 20));
         contentPanel.setOpaque(false);
         contentPanel.add(statsPanel, BorderLayout.NORTH);
-        contentPanel.add(activityPanel, BorderLayout.CENTER);
+        contentPanel.add(requestsPanel, BorderLayout.CENTER);
 
         panel.add(headerPanel, BorderLayout.NORTH);
         panel.add(contentPanel, BorderLayout.CENTER);
@@ -236,11 +249,10 @@ public class LibrarianDashboardPanel extends JPanel {
                 if (found != null) return found;
             }
         }
-        return new JLabel("0"); // fallback
+        return new JLabel("0");
     }
 
     private JLabel extractLabelFromCard(JPanel card, int labelIndex) {
-        // Helper to find label in the stat card
         Component[] components = card.getComponents();
         int labelCount = 0;
         for (Component c : components) {
@@ -259,7 +271,7 @@ public class LibrarianDashboardPanel extends JPanel {
         panel.setBackground(Theme.AQUA);
         panel.setBorder(new EmptyBorder(30, 30, 30, 30));
 
-        // Header with search
+        // ===== Header with search =====
         JPanel headerPanel = new JPanel(new BorderLayout(20, 0));
         headerPanel.setOpaque(false);
 
@@ -286,7 +298,31 @@ public class LibrarianDashboardPanel extends JPanel {
         headerPanel.add(titleLabel, BorderLayout.WEST);
         headerPanel.add(searchPanel, BorderLayout.EAST);
 
-        // Books table
+        // ===== Category filter panel ← CREATE THIS =====
+        JPanel categoryPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        categoryPanel.setOpaque(false);
+        categoryPanel.setBorder(new EmptyBorder(10, 0, 20, 0));
+
+        String[] categories = {"All", "Fiction", "Non-Fiction", "Science", "History", "Technology", "Romance"};
+        categoryButtons = new JButton[categories.length];
+
+        for (int i = 0; i < categories.length; i++) {
+            categoryButtons[i] = new JButton(categories[i]);
+
+            categoryButtons[i].setFont(Theme.NORMAL_FONT);
+            categoryButtons[i].setBackground(i == 0 ? Theme.INDIGO : Color.WHITE);
+            categoryButtons[i].setForeground(i == 0 ? Theme.AQUA : Theme.VIOLET);
+            categoryButtons[i].setFocusPainted(false);
+            categoryButtons[i].setCursor(new Cursor(Cursor.HAND_CURSOR));
+            categoryButtons[i].setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(Theme.INDIGO, 2),
+                    new EmptyBorder(5, 15, 5, 15)
+            ));
+
+            categoryPanel.add(categoryButtons[i]);
+        }
+
+        // ===== Books table =====
         JPanel tablePanel = new JPanel(new BorderLayout());
         tablePanel.setOpaque(false);
         tablePanel.setBorder(new EmptyBorder(20, 20, 20, 20));
@@ -319,8 +355,14 @@ public class LibrarianDashboardPanel extends JPanel {
 
         tablePanel.add(scrollPane, BorderLayout.CENTER);
 
+        // ===== Assemble with content panel =====
+        JPanel contentPanel = new JPanel(new BorderLayout(0, 15));
+        contentPanel.setOpaque(false);
+        contentPanel.add(categoryPanel, BorderLayout.NORTH);   // ← Add category panel here
+        contentPanel.add(tablePanel, BorderLayout.CENTER);
+
         panel.add(headerPanel, BorderLayout.NORTH);
-        panel.add(tablePanel, BorderLayout.CENTER);
+        panel.add(contentPanel, BorderLayout.CENTER);
 
         return panel;
     }
@@ -510,6 +552,35 @@ public class LibrarianDashboardPanel extends JPanel {
         popup.show(table, x, y);
     }
 
+    public void setCategoryFilterListener(CategoryFilterListener listener) {
+        if (categoryButtons != null) {
+            String[] categories = {"All", "Fiction", "Non-Fiction", "Science", "History", "Technology", "Romance"};
+
+            for (int i = 0; i < categoryButtons.length; i++) {
+                final int index = i;
+                final JButton btn = categoryButtons[i];
+                final String category = categories[i];
+
+                btn.addActionListener(e -> {
+                    // Reset all buttons
+                    for (JButton button : categoryButtons) {
+                        button.setOpaque(false);
+                        button.setForeground(Theme.VIOLET);
+                        button.setBackground(Color.WHITE);
+                    }
+
+                    // Mark selected
+                    btn.setOpaque(true);
+                    btn.setBackground(Theme.INDIGO);
+                    btn.setForeground(Theme.AQUA);
+
+                    // Call listener
+                    listener.onCategorySelected(category);
+                });
+            }
+        }
+    }
+
     private void setupLayout() {
         add(sidebarPanel, BorderLayout.WEST);
         add(mainContentPanel, BorderLayout.CENTER);
@@ -529,6 +600,35 @@ public class LibrarianDashboardPanel extends JPanel {
             setSelectedButton(usersBtn);
             cardLayout.show(mainContentPanel, "USERS");
         });
+    }
+
+    private void showRequestActionsMenu(JTable table, int row, int x, int y) {
+        JPopupMenu popup = new JPopupMenu();
+        popup.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
+
+        String requestId = table.getValueAt(row, 0).toString();  // Adjust to match your row ID column
+
+        JMenuItem approveRequest = UIComponents.createMenuItem("✅ Approve", new Color(52, 211, 153));
+        JMenuItem rejectRequest = UIComponents.createMenuItem("❌ Reject", new Color(220, 53, 69));
+        JMenuItem holdRequest = UIComponents.createMenuItem("⏸️ Put on Hold", new Color(251, 146, 60));
+
+        approveRequest.addActionListener(e -> {
+            if (requestActionsListener != null) requestActionsListener.onApprove(requestId, row);
+        });
+
+        rejectRequest.addActionListener(e -> {
+            if (requestActionsListener != null) requestActionsListener.onReject(requestId, row);
+        });
+
+        holdRequest.addActionListener(e -> {
+            if (requestActionsListener != null) requestActionsListener.onHold(requestId, row);
+        });
+
+        popup.add(approveRequest);
+        popup.add(rejectRequest);
+        popup.add(holdRequest);
+
+        popup.show(table, x, y);
     }
 
     // Public methods for adding listeners
@@ -654,18 +754,22 @@ public class LibrarianDashboardPanel extends JPanel {
         this.userActionsListener = listener;
     }
 
-    public void setActivityData(Object[][] rows) {
-        activityTableModel.setRowCount(0);
-        for (Object[] row : rows) {
-            activityTableModel.addRow(row);
-        }
-    }
-
     public void setStats(int totalBooks, int issuedBooks, int totalUsers, int availableBooks) {
         if (totalBooksLabel != null) totalBooksLabel.setText(String.valueOf(totalBooks));
         if (issuedBooksLabel != null) issuedBooksLabel.setText(String.valueOf(issuedBooks));
         if (totalUsersLabel != null) totalUsersLabel.setText(String.valueOf(totalUsers));
         if (availableBooksLabel != null) availableBooksLabel.setText(String.valueOf(availableBooks));
+    }
+
+    public DefaultTableModel getRequestsTableModel() {
+        return requestsTableModel;
+    }
+
+    public void setRequestsData(Object[][] rows) {
+        requestsTableModel.setRowCount(0);
+        for (Object[] row : rows) {
+            requestsTableModel.addRow(row);
+        }
     }
 
     public interface BookActionsListener {
@@ -680,5 +784,20 @@ public class LibrarianDashboardPanel extends JPanel {
         void onView(String userId, int row);
         void onEdit(String userId, int row);
         void onDelete(String userId, int row);
+    }
+
+    private RequestActionsListener requestActionsListener;
+    public void setRequestActionsListener(RequestActionsListener listener) {
+        this.requestActionsListener = listener;
+    }
+
+    public interface RequestActionsListener {
+        void onApprove(String requestId, int row);
+        void onReject(String requestId, int row);
+        void onHold(String requestId, int row);
+    }
+
+    public interface CategoryFilterListener {
+        void onCategorySelected(String category);
     }
 }
