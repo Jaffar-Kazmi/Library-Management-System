@@ -6,7 +6,9 @@ public abstract class User {
     private String password;
     private String fullName;
     private String email;
-    private String status; // Add this
+    private String status;
+
+    User() {}
 
     public User(String username, String password, String fullName) {
         this.username = username;

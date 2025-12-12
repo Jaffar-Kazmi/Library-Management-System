@@ -642,6 +642,18 @@ public class ReaderDashboardPanel extends JPanel {
             }
         });
 
+        viewBtn.addActionListener(e -> {
+            if (browseBookActionsListener != null) {
+                browseBookActionsListener.onView(title);
+            }
+        });
+
+        borrowBtn.addActionListener(e -> {
+            if (available && browseBookActionsListener != null) {
+                browseBookActionsListener.onBorrow(title);
+            }
+        });
+
         return card;
     }
 
@@ -1009,9 +1021,22 @@ public class ReaderDashboardPanel extends JPanel {
         return bookSearchField.getText();
     }
 
+
+    public void setBrowseBookActionsListener(BrowseBookActionsListener listener) {
+        this.browseBookActionsListener = listener;
+    }
+
+    private BrowseBookActionsListener browseBookActionsListener;
+
     public interface MyBookActionsListener {
         void onView(String bookTitle, int row);
         void onRenew(String bookTitle, int row);
         void onReturn(String bookTitle, int row);
+        void onRequestReturn(String bookTitle, int loanId, int row);
+    }
+
+    public interface BrowseBookActionsListener {
+        void onView(String bookTitle);
+        void onBorrow(String bookTitle);
     }
 }
