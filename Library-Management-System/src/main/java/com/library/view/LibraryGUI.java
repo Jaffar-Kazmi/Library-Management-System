@@ -321,19 +321,25 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
     }
 
     private void loadDashboardStats() {
-        int totalBooks = bookService.countAll();
-        int totalCopies = bookService.countTotalCopies();
-        int availableCopies = bookService.countAvailable();
-        int totalUsers = userService.countAll();
-        int issuedCopies = totalCopies - availableCopies;
+        new Thread(() -> {
+            try {
+                int totalBooks = bookService.countAll();
+                int totalCopies = bookService.countTotalCopies();
+                int availableCopies = bookService.countAvailable();
+                int totalUsers = userService.countAll();
+                int issuedCopies = totalCopies - availableCopies;
 
-        System.out.println("DEBUG stats -> books=" + totalBooks +
-                ", totalCopies=" + totalCopies +
-                ", availCopies=" + availableCopies +
-                ", users=" + totalUsers +
-                ", issuedCopies=" + issuedCopies);
+                SwingUtilities.invokeLater(() -> {
+                    librarianDashboard.setStats(totalBooks, issuedCopies, totalUsers, availableCopies);
+                });
 
-        librarianDashboard.setStats(totalBooks, issuedCopies, totalUsers, availableCopies);
+            } catch (Exception ex) {
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(librarianDashboard,
+                            "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                });
+            }
+        }).start();
     }
 
     private void loadPendingRequests() {
@@ -697,38 +703,61 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
     }
 
     private void loadBooksIntoLibrarianDashboard() {
-        List<Book> books = bookService.findAll();
-        Object[][] rows = new Object[books.size()][6];
+        new Thread(() -> {
+            try {
+                List<Book> books = bookService.findAll();
 
-        for (int i = 0; i < books.size(); i++) {
-            Book b = books.get(i);
-            String status = b.getAvailableCopies() > 0 ? "Available" : "Issued";
-            rows[i][0] = b.getIsbn();
-            rows[i][1] = b.getTitle();
-            rows[i][2] = b.getAuthor();
-            rows[i][3] = b.getCategory();
-            rows[i][4] = status;
-            rows[i][5] = "Actions";
-        }
+                Object[][] rows = new Object[books.size()][6];
+                for (int i = 0; i < books.size(); i++) {
+                    Book b = books.get(i);
+                    rows[i][0] = b.getIsbn();
+                    rows[i][1] = b.getTitle();
+                    rows[i][2] = b.getAuthor();
+                    rows[i][3] = b.getCategory();
+                    rows[i][4] = b.getAvailableCopies() > 0 ? "Available" : "Issued";
+                    rows[i][5] = "Actions";
+                }
 
-        librarianDashboard.setBooksData(rows);
+                SwingUtilities.invokeLater(() -> {
+                    librarianDashboard.setBooksData(rows);
+                });
+
+            } catch (Exception ex) {
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(librarianDashboard,
+                            "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                });
+            }
+        }).start();
     }
 
     private void loadUsersIntoLibrarianDashboard() {
-        List<User> users = userService.findAll();
-        Object[][] rows = new Object[users.size()][6];
+        new Thread(() -> {
+            try {
+                List<User> users = userService.findAll();
 
-        for (int i = 0; i < users.size(); i++) {
-            User u = users.get(i);
-            rows[i][0] = u.getId();
-            rows[i][1] = u.getFullName();
-            rows[i][2] = u.getEmail() != null ? u.getEmail() : "-";
-            rows[i][3] = u.getRole();
-            rows[i][4] = u.getStatus();
-            rows[i][5] = "Actions";
-        }
+                Object[][] rows = new Object[users.size()][6];
+                for (int i = 0; i < users.size(); i++) {
+                    User u = users.get(i);
+                    rows[i][0] = u.getId();
+                    rows[i][1] = u.getFullName();
+                    rows[i][2] = u.getEmail() != null ? u.getEmail() : "-";
+                    rows[i][3] = u.getRole();
+                    rows[i][4] = u.getStatus();
+                    rows[i][5] = "Actions";
+                }
 
-        librarianDashboard.setUsersData(rows);
+                SwingUtilities.invokeLater(() -> {
+                    librarianDashboard.setUsersData(rows);
+                });
+
+            } catch (Exception ex) {
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(librarianDashboard,
+                            "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                });
+            }
+        }).start();
     }
 
     private void handleAddBook() {
@@ -783,27 +812,35 @@ public class LibraryGUI extends JFrame implements LoginController.LoginCallBack 
 
     private void handleSearchBook() {
         String query = librarianDashboard.getBooksSearchText().trim();
-        List<Book> books;
 
-        if (query.isEmpty()) {
-            books = bookService.findAll();
-        } else {
-            books = bookService.search(query);
-        }
+        new Thread(() -> {
+            try {
+                List<Book> books = query.isEmpty()
+                        ? bookService.findAll()
+                        : bookService.search(query);
 
-        Object[][] rows = new Object[books.size()][6];
-        for (int i = 0; i < books.size(); i++) {
-            Book b = books.get(i);
-            String status = b.getAvailableCopies() > 0 ? "Available" : "Issued";
-            rows[i][0] = b.getIsbn();
-            rows[i][1] = b.getTitle();
-            rows[i][2] = b.getAuthor();
-            rows[i][3] = b.getCategory();
-            rows[i][4] = status;
-            rows[i][5] = "Actions";
-        }
+                Object[][] rows = new Object[books.size()][6];
+                for (int i = 0; i < books.size(); i++) {
+                    Book b = books.get(i);
+                    rows[i][0] = b.getIsbn();
+                    rows[i][1] = b.getTitle();
+                    rows[i][2] = b.getAuthor();
+                    rows[i][3] = b.getCategory();
+                    rows[i][4] = b.getAvailableCopies() > 0 ? "Available" : "Issued";
+                    rows[i][5] = "Actions";
+                }
 
-        librarianDashboard.setBooksData(rows);
+                SwingUtilities.invokeLater(() -> {
+                    librarianDashboard.setBooksData(rows);
+                });
+
+            } catch (Exception ex) {
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(librarianDashboard,
+                            "Search error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                });
+            }
+        }).start();
     }
 
     private void handleUserSearch() {
